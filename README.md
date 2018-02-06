@@ -1,2 +1,2 @@
 # abstract-strategy-games
-fdsdfds
+Reinforcement Learning For Board Games
