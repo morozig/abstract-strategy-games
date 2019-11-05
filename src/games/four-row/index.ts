@@ -18,7 +18,7 @@ export default class FourRow implements Game {
         {
             type: GamePlayerType.Alpha,
             planCount: 300,
-            url: 'https://github.com/morozig/asg-api/releases/download/alpha-14/model.json'
+            url: 'https://github.com/morozig/abstract-strategy-games/releases/download/alpha-14/model.json'
         },
     ] as GamePlayer[];
     createModel(parallel = false) {
