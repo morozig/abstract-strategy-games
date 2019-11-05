@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/abstract-strategy-games/static/css/main.64537864.chunk.css",
+    "main.js": "/abstract-strategy-games/static/js/main.538c0e72.chunk.js",
+    "main.js.map": "/abstract-strategy-games/static/js/main.538c0e72.chunk.js.map",
+    "runtime~main.js": "/abstract-strategy-games/static/js/runtime~main.59627a93.js",
+    "runtime~main.js.map": "/abstract-strategy-games/static/js/runtime~main.59627a93.js.map",
+    "static/js/2.d5a299f0.chunk.js": "/abstract-strategy-games/static/js/2.d5a299f0.chunk.js",
+    "static/js/2.d5a299f0.chunk.js.map": "/abstract-strategy-games/static/js/2.d5a299f0.chunk.js.map",
+    "index.html": "/abstract-strategy-games/index.html",
+    "precache-manifest.5cf324c3de06b6d46038c92927f339d7.js": "/abstract-strategy-games/precache-manifest.5cf324c3de06b6d46038c92927f339d7.js",
+    "service-worker.js": "/abstract-strategy-games/service-worker.js",
+    "static/css/main.64537864.chunk.css.map": "/abstract-strategy-games/static/css/main.64537864.chunk.css.map"
+  }
+}
