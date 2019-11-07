@@ -6,16 +6,16 @@ import Mcts from './mcts';
 interface AlphaOptions {
     gameRules: GameRules;
     model: GameModel;
-    url?: string;
+    modelName?: string;
     planCount?: number;
     randomize?: boolean;
 }
 
-const modelPredictor = (model: GameModel, url?: string) => {
-    let modelLoaded = !url;
+const modelPredictor = (model: GameModel, name?: string) => {
+    let modelLoaded = !name;
     return async(history: number[]) => {
-        if (!modelLoaded && url) {
-            await model.load(url);
+        if (!modelLoaded && name) {
+            await model.load(name);
             modelLoaded = true;
         }
         return await model.predict(history);
@@ -27,7 +27,7 @@ export default class Alpha implements Agent {
     constructor(options: AlphaOptions) {
         this.mcts = new Mcts({
             gameRules: options.gameRules,
-            predict: modelPredictor(options.model, options.url),
+            predict: modelPredictor(options.model, options.modelName),
             planCount: options.planCount,
             randomize: options.randomize
         });

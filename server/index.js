@@ -22,7 +22,7 @@ const saveFile = (file, filePath) => {
 const app = express();
 const dataDir = path.resolve(__dirname, '../data');
 const buildDir = path.resolve(__dirname, '../build');
-app.use('/api', express.static(dataDir));
+app.use('/data', express.static(dataDir));
 app.use('/', express.static(buildDir));
 app.use(fileUpload());
 

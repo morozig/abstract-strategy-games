@@ -8,7 +8,7 @@ enum GamePlayerType {
 export default interface GamePlayer {
     type: GamePlayerType;
     name?: string;
-    url?: string;
+    modelName?: string;
     planCount?: number;
 };
 

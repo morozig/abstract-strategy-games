@@ -43,7 +43,7 @@ const useGame = (game: Game) => {
                         gameRules: game.rules,
                         planCount: player.planCount,
                         model: game.createModel(),
-                        url: player.url
+                        modelName: player.modelName
                     });
                 }
                 case GamePlayerType.Human: {
@@ -59,7 +59,7 @@ const useGame = (game: Game) => {
             let rewards = [] as number[];
             for(let i = 1; !isDone && isRunningRef.current; i++) {
                 setStatus(`Player ${gameState.playerIndex + 1}'s turn`);
-                await sleep(1);
+                await sleep(10);
                 const action = await agents[gameState.playerIndex].act();
                 const gameStepResult = game.rules.step(
                     gameState, action

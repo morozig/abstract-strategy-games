@@ -5,6 +5,8 @@ import Tile from './tile';
 import Rules from './rules';
 import Network from './network';
 import Batcher from '../../lib/batcher';
+import config from '../../config';
+
 // import { indexMax } from '../../lib/helpers';
 
 type Input = number[][][];
@@ -182,10 +184,8 @@ export default class Model implements GameModel {
         await this.network.save(url);
     }
     async load(name: string){
-        const url = (name.startsWith('http')) ? name :
-            `${window.location}api/${this.gameName}` + 
-            `/model/${name}/model.json`;
-        console.log(url);
+        const url = `${config.dataUrl}/${this.gameName}/model/` +
+            `${name}/model.json`;
         await this.network.load(url);
     }
     async predict(history: number[]) {
