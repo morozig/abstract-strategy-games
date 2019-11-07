@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "a4ce6ae97719779aa6bb62fd4bc8904a",
+    "revision": "d71e8676d6fdd320c533f8e401293fed",
     "url": "/abstract-strategy-games/index.html"
   },
   {
-    "revision": "af915cb39a277c7511d8",
+    "revision": "13a029f98ddfb46093a7",
     "url": "/abstract-strategy-games/static/css/main.64537864.chunk.css"
   },
   {
@@ -12,8 +12,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/abstract-strategy-games/static/js/2.d5a299f0.chunk.js"
   },
   {
-    "revision": "af915cb39a277c7511d8",
-    "url": "/abstract-strategy-games/static/js/main.538c0e72.chunk.js"
+    "revision": "13a029f98ddfb46093a7",
+    "url": "/abstract-strategy-games/static/js/main.033dd906.chunk.js"
   },
   {
     "revision": "55aae3b1fd4315a5ef1b",
