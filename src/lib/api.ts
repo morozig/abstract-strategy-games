@@ -15,7 +15,7 @@ const getModels = async (gameName: string) => {
 };
 
 const loadHistory = async(gameName: string, historyName: string) => {
-    const requestUrl = `/api/${gameName}/history/${historyName}.json`;
+    const requestUrl = `/data/${gameName}/history/${historyName}.json`;
     const historyRequest = await fetch(requestUrl);
     const gameHistories = await historyRequest.json() as GameHistory[];
     return gameHistories;
