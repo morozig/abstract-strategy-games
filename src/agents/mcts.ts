@@ -1,11 +1,10 @@
-import Agent from '../interfaces/agent';
 import GameRules from '../interfaces/game-rules';
 import GamePrediction from '../interfaces/game-prediction';
 import { randomOf, indexMax, indexSoftMax } from '../lib/helpers';
 import StepResult from '../interfaces/game-step-result';
+import PolicyAgent from '../interfaces/policy-agent';
 
-// const bonusScale = 5;
-const bonusScale = 1;
+const bonusScale = 5;
 
 type Predictor = (history: number[]) => Promise<GamePrediction>;
 
@@ -122,7 +121,7 @@ class Node {
     }
 };
 
-export default class Mcts implements Agent{
+export default class Mcts implements PolicyAgent{
     private gameRules: GameRules;
     private predict: Predictor;
     private planCount: number;
@@ -149,14 +148,27 @@ export default class Mcts implements Agent{
         this.rootHistory = [];
     }
     async act() {
+        const { action } = await this.policyAct();
+        return action;
+    }
+    async policyAct() {
         await this.plan();
-        const policy = this.root.children.map(
+        const policy = [] as number[];
+        for (let i = 0; i < this.gameRules.actionsCount; i++) {
+            policy.push(0);
+        }
+        const probs = this.root.children.map(
             child => child.visits / this.root.visits
         );
-        const index = indexSoftMax(policy, this.randomize);
+        const index = indexSoftMax(probs, this.randomize);
         const action = this.root.children[index].action;
+        for (let i = 0; i < this.root.children.length; i++) {
+            const action = this.root.children[i].action;
+            const prob = probs[i];
+            policy[action - 1] = prob;
+        }
         this.step(action);
-        return action;
+        return { action, policy };
     }
     step(action: number) {
         const child = this.root.children.find(

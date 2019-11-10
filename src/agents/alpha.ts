@@ -1,4 +1,4 @@
-import Agent from '../interfaces/agent';
+import PolicyAgent from '../interfaces/policy-agent';
 import GameRules from '../interfaces/game-rules';
 import GameModel from '../interfaces/game-model';
 import Mcts from './mcts';
@@ -22,7 +22,7 @@ const modelPredictor = (model: GameModel, name?: string) => {
     };
 };
 
-export default class Alpha implements Agent {
+export default class Alpha implements PolicyAgent {
     private mcts: Mcts;
     constructor(options: AlphaOptions) {
         this.mcts = new Mcts({
@@ -34,6 +34,9 @@ export default class Alpha implements Agent {
     }
     act() {
         return this.mcts.act();
+    }
+    policyAct() {
+        return this.mcts.policyAct();
     }
     init() {
         return this.mcts.init();

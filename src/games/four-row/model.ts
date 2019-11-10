@@ -6,11 +6,12 @@ import Rules from './rules';
 import Network from './network';
 import Batcher from '../../lib/batcher';
 import config from '../../config';
+import PolicyAction from '../../interfaces/policy-action';
 
 // import { indexMax } from '../../lib/helpers';
 
 type Input = number[][][];
-type Output = [number[], number[]];
+type Output = [number[], number];
 
 interface Pair {
     input: Input;
@@ -88,9 +89,12 @@ const getInput = (states: State[]) => {
     };
 };
 
-const getSymHistories = (history: number[]) => {
+const getSymHistories = (history: PolicyAction[]) => {
     const symHistories = [history];
-    symHistories.push(history.map(action => 8 - action));
+    symHistories.push(history.map(({ action, policy }) => ({
+        action: 8 - action,
+        policy: policy.slice().reverse()
+    })));
     return symHistories;
 };
 
@@ -106,17 +110,9 @@ const getStates = (history: number[], rules: Rules) => {
     return states;
 };
 
-const getOutput = (reward: number, action: number) => {
-    const policyOutput = [] as number[];
-    const rewardOutput = [] as number[];
-    for (let i = 0; i < 7; i++) {
-        policyOutput[i] = 0;
-    }
-    for (let i = 0; i < 3; i++) {
-        rewardOutput[i] = 0;
-    }
-    policyOutput[action - 1] = 1;
-    rewardOutput[reward + 1] = 1;
+const getOutput = (reward: number, policy: number[]) => {
+    const policyOutput = policy;
+    const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };
 
@@ -152,7 +148,8 @@ export default class Model implements GameModel {
         const pairs = [] as Pair[];
         for (let gameHistory of gameHistories) {
             const symHistories = getSymHistories(gameHistory.history);
-            for (let history of symHistories) {
+            for (let policyActions of symHistories) {
+                const history = policyActions.map(({action}) => action);
                 const states = getStates(history, this.rules);
                 states.pop();
                 for (let i = 0; i < states.length; i++) {
@@ -161,8 +158,8 @@ export default class Model implements GameModel {
                     const lastState = states[i];
                     const lastPlayerIndex = lastState.playerIndex;
                     const reward = gameHistory.rewards[lastPlayerIndex];
-                    const action = gameHistory.history[i];
-                    const output = getOutput(reward, action);
+                    const { policy } = gameHistory.history[i];
+                    const output = getOutput(reward, policy);
                     pairs.push({
                         input,
                         output
@@ -197,11 +194,7 @@ export default class Model implements GameModel {
         } else {
             output = await this.batcher.call(input);
         }
-        const [ policy, rewards ] = output;
-        const reward = rewards.reduce(
-            (total, prob, index) => total + prob * (index - 1),
-            0
-        );
+        const [ policy, reward ] = output;
         return {
             reward,
             policy

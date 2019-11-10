@@ -84,7 +84,7 @@ export default class Network {
 
         let policy = tf.layers.conv2d({
             kernelSize: 1,
-            filters: 2,
+            filters: 1,
             strides: 1,
             padding: 'same'
         }).apply(network) as tf.SymbolicTensor;
@@ -117,20 +117,14 @@ export default class Network {
             .apply(reward) as tf.SymbolicTensor;
         reward = tf.layers.leakyReLU()
             .apply(reward) as tf.SymbolicTensor;
-        reward = tf.layers.flatten()
+        reward = tf.layers.globalAveragePooling2d({})
             .apply(reward) as tf.SymbolicTensor;
         reward = tf.layers.dense({
-            units: 20
+            units: 1
         }).apply(reward) as tf.SymbolicTensor;
-        reward = tf.layers.batchNormalization()
-            .apply(reward) as tf.SymbolicTensor;
-        reward = tf.layers.leakyReLU()
-            .apply(reward) as tf.SymbolicTensor;
-        reward = tf.layers.dense({
-            units: 3
+        reward = tf.layers.activation({
+            activation: 'tanh'
         }).apply(reward) as tf.SymbolicTensor;
-        reward = tf.layers.softmax()
-            .apply(reward) as tf.SymbolicTensor;
 
         const model = tf.model(
             {
@@ -151,14 +145,14 @@ export default class Network {
             optimizer: optimizer,
             loss: [
                 'categoricalCrossentropy',
-                'categoricalCrossentropy'
+                'meanSquaredError'
             ],
             metrics: ['accuracy']
         });
     }
     async fit(
         inputs: number[][][][],
-        outputs: [number[], number[]][]
+        outputs: [number[], number][]
     ){
         // const batchSize = inputs.length;
         const xsTensor = tf.tensor4d(inputs);
@@ -166,7 +160,7 @@ export default class Network {
             output => output[0]
         ));
         const rewardsTensor = tf.tensor2d(outputs.map(
-            output => output[1]
+            output => [output[1]]
         ));
         const ysTensors = [
             policiesTensor,
@@ -207,7 +201,7 @@ export default class Network {
         rewardsTensor.dispose();
 
         const outputs = policies.map(
-            (policy, i) => [policy, rewards[i]] as [number[], number[]]
+            (policy, i) => [policy, rewards[i][0]] as [number[], number]
         );
         return outputs;
     }

@@ -10,48 +10,6 @@ import {
 import Mcts from './agents/mcts';
 import playAlpha from './lib/play-alpha';
 
-// import GamePrediction from './interfaces/game-prediction';
-
-const trainRandom = async (game: Game) => {
-    const modelName = 'random';
-    const models = await getModels(game.name);
-    if (models.includes(modelName)) {
-        console.log(`${modelName} trained!`);
-        return;
-    }
-    const modelHistories = [] as GameHistory[];
-    const histories = await getHistories(game.name);
-    if (histories.includes(modelName)) {
-        const savedhistories = await loadHistory(
-            game.name,
-            modelName
-        );
-        for (let gameHistory of savedhistories) {
-            modelHistories.push(gameHistory);
-        }
-    } else {
-        const rules = game.rules;
-        const player1 = new Random(rules);
-        const player2 = new Random(rules);
-        const agents = [player1, player2];
-
-        for (let i = 0; i < 3; i++) {
-            const gameHistory = await play(
-                rules,
-                agents,
-                `${i + 1}`
-            );
-            modelHistories.push(gameHistory);
-        }
-        await saveHistory(game.name, modelName, modelHistories);
-    }
-    const model = game.createModel();
-    const trainSuccess = await model.train(modelHistories);
-    if (trainSuccess) {
-        await model.save(modelName);
-    }
-};
-
 const trainMcts = async (game: Game) => {
     const modelName = 'mcts-5000';
     const models = await getModels(game.name);
@@ -199,9 +157,9 @@ const run = async () => {
     console.log('train started');
 
     const game = new GameClass();
-    // await trainRandom(game);
-    // await trainMcts(game);
-    await trainAlpha(game);
+
+    await trainMcts(game);
+    // await trainAlpha(game);
 };
 
 export default run;

@@ -1,10 +1,11 @@
 import GameRules from '../interfaces/game-rules';
-import Agent from '../interfaces/agent';
 import GameHistory from '../interfaces/game-history';
+import PolicyAgent from '../interfaces/policy-agent';
+import PolicyAction from '../interfaces/policy-action';
 
 const play = async (
     gameRules: GameRules,
-    agents: Agent[],
+    agents: PolicyAgent[],
     name = ''
 ) => {
     let gameState = gameRules.init();
@@ -13,21 +14,21 @@ const play = async (
     }
     let isDone = false;
     let rewards = [] as number[];
-    const history = [] as number[];
+    const history = [] as PolicyAction[];
     for(let i = 1; !isDone; i++) {
-        const action = await agents[gameState.playerIndex].act();
+        const policyAction = await agents[gameState.playerIndex].policyAct();
         const gameStepResult = gameRules.step(
-            gameState, action
+            gameState, policyAction.action
         );
         for (let i in agents) {
             const agent = agents[i];
             const index = +i;
             if (index !== gameState.playerIndex) {
-                agent.step(action);
+                agent.step(policyAction.action);
             }
         }
-        history.push(action);
-        console.log(`${name}:${i}`, gameState, action);
+        history.push(policyAction);
+        console.log(`${name}:${i}`, gameState, policyAction.action);
         gameState = gameStepResult.state;
         isDone = gameStepResult.done;
         rewards = gameStepResult.rewards;
@@ -36,7 +37,7 @@ const play = async (
         `game ${name} finished in ${history.length} moves`,
         rewards
     );
-    return {rewards, history} as GameHistory;
+    return { rewards, history } as GameHistory;
 };
 
 export default play;
