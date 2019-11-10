@@ -57,81 +57,6 @@ export default class Network {
         this.model = this.createModel();
         this.compile();
     }
-    async fit(
-        inputs: number[][][][],
-        outputs: [number[], number[]][]
-    ){
-        // const batchSize = inputs.length;
-        const xsTensor = tf.tensor4d(inputs);
-        const policiesTensor = tf.tensor2d(outputs.map(
-            output => output[0]
-        ));
-        const rewardsTensor = tf.tensor2d(outputs.map(
-            output => output[1]
-        ));
-        const ysTensors = [
-            policiesTensor,
-            rewardsTensor
-        ];
-
-        const trainingHistory = await this.model.fit(
-            xsTensor,
-            ysTensors,
-            {
-                batchSize: 128,
-                epochs: numEpochs,
-                shuffle: true,
-                // validationSplit: 0.01,
-                callbacks: {
-                    onEpochEnd: console.log
-                }
-            }
-        );
-
-        xsTensor.dispose();
-        policiesTensor.dispose();
-        rewardsTensor.dispose();
-        console.log(trainingHistory);
-        const loss = trainingHistory.history.loss[numEpochs - 1] as number;
-        return loss;
-    }
-    async predict(inputs: number[][][][]) {
-        const inputsTensor = tf.tensor4d(inputs);
-        const [ policiesTensor, rewardsTensor ] = this.model.predict(
-            inputsTensor
-        ) as [tf.Tensor2D, tf.Tensor2D];
-        const policies = await policiesTensor.array();
-        const rewards = await rewardsTensor.array();
-
-        inputsTensor.dispose();
-        policiesTensor.dispose();
-        rewardsTensor.dispose();
-
-        const outputs = policies.map(
-            (policy, i) => [policy, rewards[i]] as [number[], number[]]
-        );
-        return outputs;
-    }
-    async save(url: string) {
-        await this.model.save(url);
-    }
-    async load(url: string) {
-        this.model = await tf.loadLayersModel(url);
-        this.compile();
-    }
-    private compile() {
-        // const optimizer = tf.train.adam();
-        const optimizer = tf.train.sgd(0.1);
-
-        this.model.compile({
-            optimizer: optimizer,
-            loss: [
-                'categoricalCrossentropy',
-                'categoricalCrossentropy'
-            ],
-            metrics: ['accuracy']
-        });
-    }
     private createModel(){
         const colorDepth = this.useColor ? 1 : 0;
         const depth = this.historyDepth * 2 + colorDepth;
@@ -167,21 +92,6 @@ export default class Network {
             .apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.leakyReLU()
             .apply(policy) as tf.SymbolicTensor;
-
-        // policy = tf.layers.conv2d({
-        //     kernelSize: [6, 1],
-        //     filters: 1
-        // }).apply(network) as tf.SymbolicTensor;
-        // policy = tf.layers.batchNormalization()
-        //     .apply(policy) as tf.SymbolicTensor;
-        // policy = tf.layers.leakyReLU()
-        //     .apply(policy) as tf.SymbolicTensor;
-        // policy = tf.layers.flatten()
-        //     .apply(policy) as tf.SymbolicTensor;
-        // policy = tf.layers.softmax()
-        //     .apply(policy) as tf.SymbolicTensor;
-
-
         policy = tf.layers.maxPooling2d(
             {
                 poolSize: [6, 1]
@@ -233,4 +143,79 @@ export default class Network {
         );
         return model;
     };
+    private compile() {
+        const optimizer = tf.train.adam();
+        // const optimizer = tf.train.sgd(0.1);
+
+        this.model.compile({
+            optimizer: optimizer,
+            loss: [
+                'categoricalCrossentropy',
+                'categoricalCrossentropy'
+            ],
+            metrics: ['accuracy']
+        });
+    }
+    async fit(
+        inputs: number[][][][],
+        outputs: [number[], number[]][]
+    ){
+        // const batchSize = inputs.length;
+        const xsTensor = tf.tensor4d(inputs);
+        const policiesTensor = tf.tensor2d(outputs.map(
+            output => output[0]
+        ));
+        const rewardsTensor = tf.tensor2d(outputs.map(
+            output => output[1]
+        ));
+        const ysTensors = [
+            policiesTensor,
+            rewardsTensor
+        ];
+
+        const trainingHistory = await this.model.fit(
+            xsTensor,
+            ysTensors,
+            {
+                batchSize: 128,
+                epochs: numEpochs,
+                shuffle: true,
+                validationSplit: 0.01,
+                callbacks: {
+                    onEpochEnd: console.log
+                }
+            }
+        );
+
+        xsTensor.dispose();
+        policiesTensor.dispose();
+        rewardsTensor.dispose();
+        console.log(trainingHistory);
+        const loss = trainingHistory.history.loss[numEpochs - 1] as number;
+        return loss;
+    }
+    async predict(inputs: number[][][][]) {
+        const inputsTensor = tf.tensor4d(inputs);
+        const [ policiesTensor, rewardsTensor ] = this.model.predict(
+            inputsTensor
+        ) as [tf.Tensor2D, tf.Tensor2D];
+        const policies = await policiesTensor.array();
+        const rewards = await rewardsTensor.array();
+
+        inputsTensor.dispose();
+        policiesTensor.dispose();
+        rewardsTensor.dispose();
+
+        const outputs = policies.map(
+            (policy, i) => [policy, rewards[i]] as [number[], number[]]
+        );
+        return outputs;
+    }
+    async save(url: string) {
+        await this.model.save(url);
+    }
+    async load(url: string) {
+        this.model = await tf.loadLayersModel(url);
+        this.compile();
+    }
 };
