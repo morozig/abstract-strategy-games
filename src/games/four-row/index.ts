@@ -18,7 +18,7 @@ export default class FourRow implements Game {
         {
             type: GamePlayerType.Alpha,
             planCount: 300,
-            modelName: 'alpha-14'
+            modelName: 'alpha-4'
         },
     ] as GamePlayer[];
     createModel(parallel = false) {

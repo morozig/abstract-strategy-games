@@ -32,13 +32,13 @@ const trainMcts = async (game: Game) => {
         const rules = game.rules;
         const pureMctsOptions = {
             gameRules: rules,
-            planCount: 50
+            planCount: 5000
         };
         const player1 = new Mcts(pureMctsOptions);
         const player2 = new Mcts(pureMctsOptions);
         const agents = [player1, player2];
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 100; i++) {
             const gameHistory = await play(
                 rules,
                 agents,
@@ -100,7 +100,7 @@ const trainGeneration = async (game: Game, generation: number) => {
     }
     await model.train(modelHistories);
 
-    const gamesCount = 4;
+    const gamesCount = 5;
     const contest = await playAlpha({
         gameRules: rules,
         model1: model,
@@ -119,10 +119,10 @@ const trainGeneration = async (game: Game, generation: number) => {
             .slice(gamesCount)
             .reduce((score, history) => score + history.rewards[1], 0);
     console.log(`score: ${modelScore}`);
-    if (modelScore > 0) {
+    if (modelScore > gamesCount + 1) {
         await model.save(modelName);
     }
-    return modelScore > 0;
+    return modelScore > gamesCount + 1;
 };
 
 const trainAlpha = async (game: Game) => {
@@ -159,7 +159,7 @@ const run = async () => {
     const game = new GameClass();
 
     await trainMcts(game);
-    // await trainAlpha(game);
+    await trainAlpha(game);
 };
 
 export default run;

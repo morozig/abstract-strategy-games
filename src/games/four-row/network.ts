@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 
-const numFilters = 70;
-const numLayers = 1;
+const numFilters = 8;
+const numLayers = 3;
 const numEpochs = 40;
 
 interface Options {
