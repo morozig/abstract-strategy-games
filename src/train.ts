@@ -158,7 +158,7 @@ const run = async () => {
 
     const game = new GameClass();
 
-    await trainMcts(game);
+    // await trainMcts(game);
     await trainAlpha(game);
 };
 

@@ -1,4 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
+import { residualNetwork2D } from '../../lib/networks';
 
 const numFilters = 8;
 const numLayers = 3;
@@ -8,44 +9,6 @@ interface Options {
     historyDepth: number;
     useColor: boolean;
 }
-
-const residual = ( input: tf.SymbolicTensor ) => {
-    let network = tf.layers.conv2d({
-        kernelSize: 3,
-        filters: numFilters,
-        strides: 1,
-        padding: 'same',
-        // kernelInitializer: 'VarianceScaling',
-        // kernelRegularizer: 'l1l2'
-    }).apply(input) as tf.SymbolicTensor;
-
-    network = tf.layers.batchNormalization()
-        .apply(network) as tf.SymbolicTensor;
-
-    network = tf.layers.leakyReLU()
-        .apply(network) as tf.SymbolicTensor;
-
-    network = tf.layers.conv2d({
-        kernelSize: 3,
-        filters: numFilters,
-        strides: 1,
-        padding: 'same',
-        // kernelInitializer: 'VarianceScaling',
-        // kernelRegularizer: 'l1l2'
-    }).apply(input) as tf.SymbolicTensor;
-
-    network = tf.layers.batchNormalization()
-        .apply(network) as tf.SymbolicTensor;
-
-    network = tf.layers.add()
-        .apply([network, input]) as tf.SymbolicTensor;;
-
-    network = tf.layers.leakyReLU()
-        .apply(network) as tf.SymbolicTensor;;
-
-
-    return network;
-};
 
 export default class Network {
     private model: tf.LayersModel;
@@ -60,27 +23,14 @@ export default class Network {
     private createModel(){
         const colorDepth = this.useColor ? 1 : 0;
         const depth = this.historyDepth * 2 + colorDepth;
-        console.log(depth);
         const input = tf.input({
             shape: [6, 7, depth]
         });
 
-        let network = input;
-
-        network = tf.layers.conv2d({
-            kernelSize: 3,
-            filters: numFilters,
-            padding: 'same',
-            strides: 1,
-        }).apply(network) as tf.SymbolicTensor;
-        network = tf.layers.batchNormalization()
-            .apply(network) as tf.SymbolicTensor;
-        network = tf.layers.leakyReLU()
-            .apply(network) as tf.SymbolicTensor;
-
-        for (let i = 0; i < numLayers; i++) {
-            network = residual(network)
-        }
+        let network = residualNetwork2D(input, {
+            numLayers,
+            numFilters
+        });
 
         let policy = tf.layers.conv2d({
             kernelSize: 1,
