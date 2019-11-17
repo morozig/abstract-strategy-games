@@ -87,8 +87,8 @@ const trainGeneration = async (game: Game, generation: number) => {
             gameRules: rules,
             model1: model,
             model2: model,
-            gamesCount: 100,
-            planCount: 300,
+            gamesCount: 10,
+            planCount: 50,
             randomize: true
         });
 
@@ -99,6 +99,8 @@ const trainGeneration = async (game: Game, generation: number) => {
         await saveHistory(game.name, modelName, modelHistories);
     }
     await model.train(modelHistories);
+
+    return;
 
     const gamesCount = 5;
     const contest = await playAlpha({
@@ -140,6 +142,7 @@ const trainAlpha = async (game: Game) => {
             tries += 1;
             console.log(`train ${i}:${tries}`);
             const success = await trainGeneration(game, i);
+            return;
             if (success) {
                 break;
             }

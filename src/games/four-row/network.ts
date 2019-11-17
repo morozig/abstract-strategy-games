@@ -2,8 +2,8 @@ import * as tf from '@tensorflow/tfjs';
 import { residualNetwork2D } from '../../lib/networks';
 
 const numFilters = 8;
-const numLayers = 3;
-const numEpochs = 40;
+const numLayers = 2;
+const numEpochs = 10;
 
 interface Options {
     historyDepth: number;
@@ -99,6 +99,7 @@ export default class Network {
             ],
             metrics: ['accuracy']
         });
+        console.log(this.model.layers);
     }
     async fit(
         inputs: number[][][][],
