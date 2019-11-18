@@ -104,14 +104,14 @@ const trainGeneration = async (
     }
     await model.train(modelHistories, {improve});
 
-    const gamesCount = 5;
+    const gamesCount = 2;
     const contest = await playAlpha({
         gameRules: rules,
         model1: model,
         model2: previousModel,
         gamesCount: gamesCount,
         switchSides: true,
-        planCount: 300,
+        planCount: 50,
         randomize: true
     });
     const modelScore =
@@ -139,7 +139,7 @@ const trainAlpha = async (game: Game) => {
         Math.max(...generations) + 1 : 1;
     for (let i = lastGeneration; true; i++) {
         let tries = 1;
-        const maxTries = 10;
+        const maxTries = 2;
         while (tries <= maxTries) {
             console.log(`train ${i}:${tries}`);
             const improve = tries > maxTries / 2;

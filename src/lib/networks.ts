@@ -81,15 +81,16 @@ const residualNetwork2D = (
 
 const copyWeights = (from: tf.LayersModel, to: tf.LayersModel) => {
     for (let sourceLayer of from.layers) {
+        const sourceWeights = sourceLayer.getWeights();
+        if (!sourceWeights) {
+            continue;
+        }
         try {
             const targetLayer = to.getLayer(sourceLayer.name);
-            const sourceWeights = sourceLayer.getWeights();
-            if (sourceWeights.length > 0) {
-                targetLayer.setWeights(sourceWeights);
-            }
+            targetLayer.setWeights(sourceWeights);
         }
         catch (err) {
-            console.log(`Failed to copy layer ${sourceLayer.name}: ${err}`);
+            console.log(`Failed to copy layer ${sourceLayer.name}: ${err}`, sourceLayer);
         }
     }
 };

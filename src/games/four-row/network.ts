@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 import { residualNetwork2D, convLayer2D, countResidualLayers, copyWeights } from '../../lib/networks';
 
 const numFilters = 8;
-const defaultNumLayers = 2;
+const defaultNumLayers = 1;
 const numEpochs = 40;
 
 interface Options {
@@ -89,7 +89,6 @@ export default class Network {
             ],
             metrics: ['accuracy']
         });
-        console.log(this.model.layers);
     }
     async fit(
         inputs: number[][][][],
@@ -161,5 +160,6 @@ export default class Network {
         copyWeights(this.model, newModel);
         this.model.dispose();
         this.model = newModel;
+        this.compile();
     }
 };
