@@ -5,6 +5,7 @@ const convLayer2D = (
     options: {
         numFilters: number;
         kernelSize?: number;
+        name: string;
     }
 ) => {
     const kernelSize = options.kernelSize || 3;
@@ -13,6 +14,7 @@ const convLayer2D = (
         filters: options.numFilters,
         strides: 1,
         padding: 'same',
+        name: options.name
     }).apply(input) as tf.SymbolicTensor;
     network = tf.layers.batchNormalization()
         .apply(network) as tf.SymbolicTensor;
@@ -24,14 +26,20 @@ const convLayer2D = (
 const residualLayer2D = (
     input: tf.SymbolicTensor,
     options: {
+        id: number;
         numFilters: number;
         kernelSize?: number;
     }
 ) => {
     const kernelSize = options.kernelSize || 3;
-    let network = convLayer2D(input, options);
+    let network = convLayer2D(input, {
+        name: `residual${options.id}_conv2d1`,
+        numFilters: options.numFilters,
+        kernelSize: options.kernelSize
+    });
 
     network = tf.layers.conv2d({
+        name: `residual${options.id}_conv2d2`,
         kernelSize,
         filters: options.numFilters,
         strides: 1,
@@ -55,10 +63,18 @@ const residualNetwork2D = (
         kernelSize?: number;
     }
 ) => {
-    let network = convLayer2D(input, options);
+    let network = convLayer2D(input, {
+        name: 'residual0_conv2d',
+        numFilters: options.numFilters,
+        kernelSize: options.kernelSize
+    });
 
-    for (let i = 0; i < options.numLayers; i++) {
-        network = residualLayer2D(network, options)
+    for (let i = 1; i <= options.numLayers; i++) {
+        network = residualLayer2D(network, {
+            id: i,
+            numFilters: options.numFilters,
+            kernelSize: options.kernelSize
+        })
     }
     return network;
 };
@@ -78,74 +94,16 @@ const copyWeights = (from: tf.LayersModel, to: tf.LayersModel) => {
     }
 };
 
-const isResidualEnd = (output: tf.layers.Layer) => {
-    const name = output.name;
-    if (!name.startsWith('leaky_re_lu_')) {
-        return false;
-    }
-    const addLayer = output.input;
-    if (!addLayer) {
-        return false;
-    }
-    if (!(addLayer instanceof tf.SymbolicTensor)) {
-        return false;
-    }
-    if (!addLayer.name.startsWith('add_')) {
-        return false;
-    }
-    const [ batch2Layer , input2 ] = addLayer.inputs;
-    if (!batch2Layer || !input2) {
-        return false;
-    }
-    if (!batch2Layer.name.startsWith('batch_normalization_')) {
-        return false;
-    }
-    const [ conv2Layer ] = batch2Layer.inputs;
-    if (!conv2Layer) {
-        return false;
-    }
-    if (!conv2Layer.name.startsWith('conv2d_')) {
-        return false;
-    }
-    const [ leakyLayer ] = conv2Layer.inputs;
-    if (!leakyLayer) {
-        return false;
-    }
-    if (!leakyLayer.name.startsWith('leaky_re_lu_')) {
-        return false;
-    }
-    const [ batch1Layer ] = leakyLayer.inputs;
-    if (!batch1Layer) {
-        return false;
-    }
-    if (!batch1Layer.name.startsWith('batch_normalization_')) {
-        return false;
-    }
-    const [ conv1Layer ] = batch1Layer.inputs;
-    if (!conv1Layer) {
-        return false;
-    }
-    if (!conv1Layer.name.startsWith('conv2d_')) {
-        return false;
-    }
-    const [ input1 ] = conv1Layer.inputs;
-    if (!input1) {
-        return false;
-    }
-    if (!(input1.name === input2.name)) {
-        return false;
-    }
-    return true;
-};
-
 const countResidualLayers = (model: tf.LayersModel) => {
-    return model
+    const totalResidualConvLayers = model
         .layers
-        .filter(isResidualEnd)
+        .filter(layer => layer.name.startsWith('residual'))
         .length;
+    return (totalResidualConvLayers - 1) / 2;
 };
 
 export {
+    convLayer2D,
     residualNetwork2D,
     copyWeights,
     countResidualLayers

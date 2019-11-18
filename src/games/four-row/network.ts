@@ -1,9 +1,9 @@
 import * as tf from '@tensorflow/tfjs';
-import { residualNetwork2D } from '../../lib/networks';
+import { residualNetwork2D, convLayer2D, countResidualLayers, copyWeights } from '../../lib/networks';
 
 const numFilters = 8;
-const numLayers = 2;
-const numEpochs = 10;
+const defaultNumLayers = 2;
+const numEpochs = 40;
 
 interface Options {
     historyDepth: number;
@@ -20,7 +20,7 @@ export default class Network {
         this.model = this.createModel();
         this.compile();
     }
-    private createModel(){
+    private createModel(numLayers=defaultNumLayers){
         const colorDepth = this.useColor ? 1 : 0;
         const depth = this.historyDepth * 2 + colorDepth;
         const input = tf.input({
@@ -32,45 +32,35 @@ export default class Network {
             numFilters
         });
 
-        let policy = tf.layers.conv2d({
+        let policy = convLayer2D(network, {
             kernelSize: 1,
-            filters: 1,
-            strides: 1,
-            padding: 'same'
-        }).apply(network) as tf.SymbolicTensor;
-        policy = tf.layers.batchNormalization()
-            .apply(policy) as tf.SymbolicTensor;
-        policy = tf.layers.leakyReLU()
-            .apply(policy) as tf.SymbolicTensor;
+            numFilters: 1,
+            name: 'policy_conv2d'
+        });
         policy = tf.layers.maxPooling2d(
             {
                 poolSize: [6, 1]
             }
         ).apply(policy) as tf.SymbolicTensor;
-        policy = tf.layers.batchNormalization()
-            .apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.flatten()
             .apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.dense({
-            units: 7
+            units: 7,
+            name: 'policy_dense'
         }).apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.softmax()
             .apply(policy) as tf.SymbolicTensor;
 
-        let reward = tf.layers.conv2d({
+        let reward = convLayer2D(network, {
             kernelSize: 1,
-            filters: 1,
-            strides: 1,
-            padding: 'same',
-        }).apply(network) as tf.SymbolicTensor;
-        reward = tf.layers.batchNormalization()
-            .apply(reward) as tf.SymbolicTensor;
-        reward = tf.layers.leakyReLU()
-            .apply(reward) as tf.SymbolicTensor;
+            numFilters: 1,
+            name: 'reward_conv2d'
+        });
         reward = tf.layers.globalAveragePooling2d({})
             .apply(reward) as tf.SymbolicTensor;
         reward = tf.layers.dense({
-            units: 1
+            units: 1,
+            name: 'reward_dense'
         }).apply(reward) as tf.SymbolicTensor;
         reward = tf.layers.activation({
             activation: 'tanh'
@@ -160,7 +150,16 @@ export default class Network {
         await this.model.save(url);
     }
     async load(url: string) {
+        this.model.dispose();
         this.model = await tf.loadLayersModel(url);
         this.compile();
+    }
+    addLayer() {
+        const numLayers = countResidualLayers(this.model);
+        console.log(`new layer: ${numLayers + 1}`);
+        const newModel = this.createModel(numLayers + 1);
+        copyWeights(this.model, newModel);
+        this.model.dispose();
+        this.model = newModel;
     }
 };

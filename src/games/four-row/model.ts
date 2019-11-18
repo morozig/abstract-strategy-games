@@ -1,4 +1,4 @@
-import GameModel from '../../interfaces/game-model';
+import GameModel, { TrainOptions } from '../../interfaces/game-model';
 import GameHistory from '../../interfaces/game-history';
 import State from './state';
 import Tile from './tile';
@@ -142,7 +142,10 @@ export default class Model implements GameModel {
             );
         }
     }
-    async train(gameHistories: GameHistory[]) {
+    async train(
+        gameHistories: GameHistory[],
+        options?: TrainOptions
+    ) {
         const inputs = [] as Input[];
         const outputs = [] as Output[];
         const pairs = [] as Pair[];
@@ -172,6 +175,9 @@ export default class Model implements GameModel {
             outputs.push(pair.output)
         });
         console.log(`training data length: ${inputs.length}`);
+        if (options && options.improve) {
+            this.network.addLayer();
+        }
         const loss = await this.network.fit(inputs, outputs);
         return loss < 0.5;
     }

@@ -54,7 +54,11 @@ const trainMcts = async (game: Game) => {
     await model.save(modelName);
 };
 
-const trainGeneration = async (game: Game, generation: number) => {
+const trainGeneration = async (
+    game: Game,
+    generation: number,
+    improve?: boolean
+) => {
     const modelName = `alpha-${generation}`;
     const models = await getModels(game.name);
     if (models.includes(modelName)) {
@@ -98,9 +102,7 @@ const trainGeneration = async (game: Game, generation: number) => {
         console.log(modelHistories);
         await saveHistory(game.name, modelName, modelHistories);
     }
-    await model.train(modelHistories);
-
-    return;
+    await model.train(modelHistories, {improve});
 
     const gamesCount = 5;
     const contest = await playAlpha({
@@ -136,18 +138,18 @@ const trainAlpha = async (game: Game) => {
     const lastGeneration = generations.length > 0 ?
         Math.max(...generations) + 1 : 1;
     for (let i = lastGeneration; true; i++) {
-        let tries = 0;
-        const triesCount = 10;
-        while (tries <= triesCount) {
-            tries += 1;
+        let tries = 1;
+        const maxTries = 10;
+        while (tries <= maxTries) {
             console.log(`train ${i}:${tries}`);
-            const success = await trainGeneration(game, i);
-            return;
+            const improve = tries > maxTries / 2;
+            const success = await trainGeneration(game, i, improve);
+            tries += 1;
             if (success) {
                 break;
             }
         }
-        if (tries <= triesCount) {
+        if (tries <= maxTries) {
             console.log(`new generation ${i + 1}!`);
         } else {
             break;
