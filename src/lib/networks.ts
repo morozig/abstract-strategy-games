@@ -82,7 +82,7 @@ const residualNetwork2D = (
 const copyWeights = (from: tf.LayersModel, to: tf.LayersModel) => {
     for (let sourceLayer of from.layers) {
         const sourceWeights = sourceLayer.getWeights();
-        if (!sourceWeights) {
+        if (!sourceWeights || sourceWeights.length <= 0) {
             continue;
         }
         try {

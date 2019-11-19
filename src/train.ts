@@ -91,8 +91,8 @@ const trainGeneration = async (
             gameRules: rules,
             model1: model,
             model2: model,
-            gamesCount: 10,
-            planCount: 50,
+            gamesCount: 100,
+            planCount: 300,
             randomize: true
         });
 
@@ -104,14 +104,14 @@ const trainGeneration = async (
     }
     await model.train(modelHistories, {improve});
 
-    const gamesCount = 2;
+    const gamesCount = 5;
     const contest = await playAlpha({
         gameRules: rules,
         model1: model,
         model2: previousModel,
         gamesCount: gamesCount,
         switchSides: true,
-        planCount: 50,
+        planCount: 300,
         randomize: true
     });
     const modelScore =
