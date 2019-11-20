@@ -16,7 +16,9 @@ const convLayer2D = (
         padding: 'same',
         name: options.name
     }).apply(input) as tf.SymbolicTensor;
-    network = tf.layers.batchNormalization()
+    network = tf.layers.batchNormalization({
+        name: `${options.name}_bn`
+    })
         .apply(network) as tf.SymbolicTensor;
     network = tf.layers.leakyReLU()
         .apply(network) as tf.SymbolicTensor;

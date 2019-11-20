@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 import { residualNetwork2D, convLayer2D, countResidualLayers, copyWeights } from '../../lib/networks';
 
 const numFilters = 8;
-const defaultNumLayers = 1;
+const defaultNumLayers = 2;
 const numEpochs = 40;
 
 interface Options {
