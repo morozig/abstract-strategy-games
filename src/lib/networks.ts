@@ -102,7 +102,7 @@ const countResidualLayers = (model: tf.LayersModel) => {
         .layers
         .filter(layer => layer.name.startsWith('residual'))
         .length;
-    return (totalResidualConvLayers - 1) / 2;
+    return (totalResidualConvLayers - 2) / 4;
 };
 
 export {
