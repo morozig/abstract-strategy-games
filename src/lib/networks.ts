@@ -47,8 +47,9 @@ const residualLayer2D = (
         strides: 1,
         padding: 'same',
     }).apply(network) as tf.SymbolicTensor;
-    network = tf.layers.batchNormalization()
-        .apply(network) as tf.SymbolicTensor;
+    network = tf.layers.batchNormalization({
+        name: `residual${options.id}_conv2d2_bn`
+    }).apply(network) as tf.SymbolicTensor;
 
     network = tf.layers.add()
         .apply([network, input]) as tf.SymbolicTensor;;
@@ -92,7 +93,7 @@ const copyWeights = (from: tf.LayersModel, to: tf.LayersModel) => {
             targetLayer.setWeights(sourceWeights);
         }
         catch (err) {
-            console.log(`Failed to copy layer ${sourceLayer.name}: ${err}`, sourceLayer);
+            console.log(`Failed to copy layer ${sourceLayer.name}: ${err}`, from.layers);
         }
     }
 };

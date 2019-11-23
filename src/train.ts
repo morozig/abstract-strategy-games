@@ -114,14 +114,15 @@ const trainGeneration = async (
         planCount: 300,
         randomize: true
     });
-    const modelScore =
-        contest
-            .slice(0, gamesCount)
-            .reduce((score, history) => score + history.rewards[0], 0)
-        +
-        contest
-            .slice(gamesCount)
-            .reduce((score, history) => score + history.rewards[1], 0);
+    const lost = contest
+        .slice(0, gamesCount)
+        .filter(({ rewards }) => rewards[0] === -1)
+        .length
+        + contest
+        .slice(gamesCount)
+        .filter(({ rewards }) => rewards[1] === -1)
+        .length;
+    const modelScore = 2 * gamesCount - lost;
     console.log(`score: ${modelScore}`);
     if (modelScore > gamesCount + 1) {
         await model.save(modelName);
