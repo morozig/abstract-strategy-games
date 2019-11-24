@@ -1,11 +1,15 @@
 const indexMax = (numbers: number[]) =>
     numbers.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
 
-const softMax = (numbers: number[], softer?: boolean) => {
-    const boost = softer ? 10 : 100;
+const softMaxWithParam = (numbers: number[], boost: number) => {
     const exps = numbers.map(value => Math.exp(value * boost));
     const sum = exps.reduce((a, b) => a + b, 0);
     return exps.map(exp => exp / sum);
+};
+
+const softMax = (numbers: number[], softer?: boolean) => {
+    const boost = softer ? 10 : 100;
+    return softMaxWithParam(numbers, boost);
 };
 
 const indexSoftMax = (numbers: number[], softer?: boolean) => {
@@ -60,10 +64,16 @@ const durationHR = (ms: number) => {
     return 'less than a second';
 };
 
+const softUniform = (numbers: number[]) => {
+    const boost = 1;
+    return softMaxWithParam(numbers, boost);
+};
+
 export {
     indexMax,
     randomOf,
     indexSoftMax,
     sleep,
-    durationHR
+    durationHR,
+    softUniform
 };

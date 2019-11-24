@@ -6,9 +6,11 @@ const convLayer2D = (
         numFilters: number;
         kernelSize?: number;
         name: string;
+        noActivation?: boolean;
     }
 ) => {
     const kernelSize = options.kernelSize || 3;
+    const useActivation = !options.noActivation;
     let network = tf.layers.conv2d({
         kernelSize,
         filters: options.numFilters,
@@ -20,8 +22,10 @@ const convLayer2D = (
         name: `${options.name}_bn`
     })
         .apply(network) as tf.SymbolicTensor;
-    network = tf.layers.leakyReLU()
-        .apply(network) as tf.SymbolicTensor;
+    if (useActivation) {
+        network = tf.layers.leakyReLU()
+            .apply(network) as tf.SymbolicTensor;
+    }
     return network;
 };
 
@@ -33,23 +37,17 @@ const residualLayer2D = (
         kernelSize?: number;
     }
 ) => {
-    const kernelSize = options.kernelSize || 3;
     let network = convLayer2D(input, {
         name: `residual${options.id}_conv2d1`,
         numFilters: options.numFilters,
         kernelSize: options.kernelSize
     });
-
-    network = tf.layers.conv2d({
+    network = convLayer2D(network, {
         name: `residual${options.id}_conv2d2`,
-        kernelSize,
-        filters: options.numFilters,
-        strides: 1,
-        padding: 'same',
-    }).apply(network) as tf.SymbolicTensor;
-    network = tf.layers.batchNormalization({
-        name: `residual${options.id}_conv2d2_bn`
-    }).apply(network) as tf.SymbolicTensor;
+        numFilters: options.numFilters,
+        kernelSize: options.kernelSize,
+        noActivation: true
+    });
 
     network = tf.layers.add()
         .apply([network, input]) as tf.SymbolicTensor;;
