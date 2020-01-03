@@ -3,10 +3,12 @@ import GameHistory from '../../interfaces/game-history';
 import State from './state';
 import Tile from './tile';
 import Rules from './rules';
-import Network from './network';
+// import Network from './general';
+import Network from './residual';
 import Batcher from '../../lib/batcher';
 import config from '../../config';
 import PolicyAction from '../../interfaces/policy-action';
+import { softMax, indexMax } from '../../lib/helpers';
 
 // import { indexMax } from '../../lib/helpers';
 
@@ -18,8 +20,8 @@ interface Pair {
     output: Output;
 };
 
-const historyDepth = 2;
-const useColor = true;
+const historyDepth = 1;
+const useColor = false;
 
 const getHash = (state: State) => {
     return state.board
@@ -111,7 +113,8 @@ const getStates = (history: number[], rules: Rules) => {
 };
 
 const getOutput = (reward: number, policy: number[]) => {
-    const policyOutput = policy;
+    // const policyOutput = policy;
+    const policyOutput = softMax(policy);
     const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };
@@ -201,6 +204,10 @@ export default class Model implements GameModel {
             output = await this.batcher.call(input);
         }
         const [ policy, reward ] = output;
+        const maxProb = policy[indexMax(policy)];
+        if (maxProb > 0.6) {
+            console.log('warning!', maxProb, input, output);
+        }
         return {
             reward,
             policy

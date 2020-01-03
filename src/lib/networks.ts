@@ -16,10 +16,12 @@ const convLayer2D = (
         filters: options.numFilters,
         strides: 1,
         padding: 'same',
-        name: options.name
+        name: options.name,
+        useBias: false
     }).apply(input) as tf.SymbolicTensor;
     network = tf.layers.batchNormalization({
-        name: `${options.name}_bn`
+        name: `${options.name}_bn`,
+        axis: 3
     })
         .apply(network) as tf.SymbolicTensor;
     if (useActivation) {

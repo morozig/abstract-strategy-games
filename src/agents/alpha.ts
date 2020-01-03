@@ -2,7 +2,6 @@ import PolicyAgent from '../interfaces/policy-agent';
 import GameRules from '../interfaces/game-rules';
 import GameModel from '../interfaces/game-model';
 import Mcts from './mcts';
-import { softUniform } from '../lib/helpers';
 
 interface AlphaOptions {
     gameRules: GameRules;
@@ -20,10 +19,9 @@ const modelPredictor = (model: GameModel, name?: string) => {
             modelLoaded = true;
         }
         const { reward, policy } = await model.predict(history);
-        const softUniformPolicy = softUniform(policy);
         return {
             reward,
-            policy: softUniformPolicy
+            policy
         };
     };
 };

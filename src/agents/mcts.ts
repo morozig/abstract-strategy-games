@@ -4,7 +4,7 @@ import { randomOf, indexMax, indexSoftMax } from '../lib/helpers';
 import StepResult from '../interfaces/game-step-result';
 import PolicyAgent from '../interfaces/policy-agent';
 
-const bonusScale = 5;
+const bonusScale = 1;
 
 type Predictor = (history: number[]) => Promise<GamePrediction>;
 
@@ -160,7 +160,8 @@ export default class Mcts implements PolicyAgent{
         const probs = this.root.children.map(
             child => child.visits / this.root.visits
         );
-        const index = indexSoftMax(probs, this.randomize);
+        const temp = this.randomize ? 0.1 : 0;
+        const index = indexSoftMax(probs, temp);
         const action = this.root.children[index].action;
         for (let i = 0; i < this.root.children.length; i++) {
             const action = this.root.children[i].action;

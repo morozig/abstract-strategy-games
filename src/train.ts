@@ -1,14 +1,17 @@
-import play from './lib/play';
+import {
+    play,
+    playAlpha,
+    getLevel
+} from './lib/play';
 import Game from '../src/interfaces/game';
 
 import GameClass from './games/four-row';
-import Random from './agents/random';
+// import Random from './agents/random';
 import GameHistory from './interfaces/game-history';
 import {
-    getModels, getHistories, loadHistory, saveHistory
+    getModels, getHistories, loadHistory, saveHistory, loadResult, saveResult
 } from './lib/api';
 import Mcts from './agents/mcts';
-import playAlpha from './lib/play-alpha';
 
 const trainMcts = async (game: Game) => {
     const modelName = 'mcts-5000';
@@ -51,7 +54,9 @@ const trainMcts = async (game: Game) => {
     }
     const model = game.createModel();
     const trainSuccess = await model.train(modelHistories);
-    await model.save(modelName);
+    if (trainSuccess) {
+        await model.save(modelName);
+    }
 };
 
 const trainGeneration = async (
@@ -68,11 +73,30 @@ const trainGeneration = async (
     const rules = game.rules;
     const previousGeneration = generation - 1;
     const previousModelName = `alpha-${previousGeneration}`;
+    let previousModelLevel = [1, 1];
     const previousModel = game.createModel(true);
     const model = game.createModel(true);
+
     if (previousGeneration > 0) {
         await previousModel.load(previousModelName);
         await model.load(previousModelName);
+        const previousModelResult = await loadResult(
+            game.name,
+            previousModelName
+        );
+        if (previousModelResult.level) {
+            previousModelLevel[0] = previousModelResult.level[0];
+            previousModelLevel[1] = previousModelResult.level[1];
+        }
+    } else {
+        const model0Level = await getLevel({
+            gameRules: rules,
+            model,
+            startLevel: previousModelLevel,
+            planCount: 50
+        });
+        previousModelLevel[0] = model0Level[0];
+        previousModelLevel[1] = model0Level[1];
     }
 
     const modelHistories = [] as GameHistory[];
@@ -92,7 +116,7 @@ const trainGeneration = async (
             model1: model,
             model2: model,
             gamesCount: 100,
-            planCount: 300,
+            planCount: 50,
             randomize: true
         });
 
@@ -104,6 +128,22 @@ const trainGeneration = async (
     }
     await model.train(modelHistories, {improve});
 
+    const modelLevel = await getLevel({
+        gameRules: rules,
+        model,
+        startLevel: previousModelLevel,
+        planCount: 50
+    });
+    console.log(`previous level: ${previousModelLevel}`);
+    console.log(`current level: ${modelLevel}`);
+
+    if (modelLevel[0] < previousModelLevel[0] || 
+        modelLevel[1] < previousModelLevel[1]
+    ) {
+        console.log('Failed to beat previous level');
+        return false;
+    }
+
     const gamesCount = 5;
     const contest = await playAlpha({
         gameRules: rules,
@@ -111,7 +151,7 @@ const trainGeneration = async (
         model2: previousModel,
         gamesCount: gamesCount,
         switchSides: true,
-        planCount: 300,
+        planCount: 50,
         randomize: true
     });
     const lost = contest
@@ -124,8 +164,16 @@ const trainGeneration = async (
         .length;
     const modelScore = 2 * gamesCount - lost;
     console.log(`score: ${modelScore}`);
+        
     if (modelScore > gamesCount + 1) {
         await model.save(modelName);
+        await saveResult(
+            game.name,
+            modelName,
+            {
+                level: modelLevel
+            }
+        );
     }
     return modelScore > gamesCount + 1;
 };
@@ -165,6 +213,8 @@ const run = async () => {
     const game = new GameClass();
 
     // await trainMcts(game);
+    console.log(trainMcts);
+    // console.log(trainAlpha);
     await trainAlpha(game);
 };
 

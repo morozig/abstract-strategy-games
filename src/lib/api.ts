@@ -1,4 +1,5 @@
 import GameHistory from "../interfaces/game-history";
+import TrainingResult from "../interfaces/game-training-result";
 
 const getHistories = async (gameName: string) => {
     const requestUrl = `/api/${gameName}/history`;
@@ -46,9 +47,43 @@ const saveHistory = async(
     );
 };
 
+const loadResult = async(gameName: string, modelName: string) => {
+    const requestUrl = `/data/${gameName}/result/${modelName}.json`;
+    const resultRequest = await fetch(requestUrl);
+    const result = await resultRequest.json() as TrainingResult;
+    return result;
+};
+
+const saveResult = async(
+        gameName: string,
+        modelName: string,
+        result: TrainingResult
+    ) => {
+    const requestUrl = `/api/${gameName}/result`;
+    const saveData = new FormData();
+    saveData.append(
+        `${modelName}.json`,
+        new Blob(
+            [JSON.stringify(result)],
+            {type: 'application/json'}
+        ),
+        `${modelName}.json`
+    );
+
+    await fetch(
+        requestUrl,
+        {
+            method: 'POST',
+            body: saveData
+        }
+    );
+};
+
 export {
     getHistories,
     getModels,
     saveHistory,
-    loadHistory
+    loadHistory,
+    loadResult,
+    saveResult
 }
