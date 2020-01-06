@@ -1,16 +1,17 @@
 import GameModel, { TrainOptions } from '../../interfaces/game-model';
 import GameHistory from '../../interfaces/game-history';
-import State from './state';
-import Tile from './tile';
+import {
+    Tile,
+    State
+} from './board';
 import Rules from './rules';
 // import Network from './general';
-import Network from './residual';
+import Network from './networks/residual';
 import Batcher from '../../lib/batcher';
 import config from '../../config';
 import PolicyAction from '../../interfaces/policy-action';
 import { softMax } from '../../lib/helpers';
-
-// import { indexMax } from '../../lib/helpers';
+import { PlaneSymmetry, plane } from '../../lib/transforms';
 
 type Input = number[][][];
 type Output = [number[], number];
@@ -91,12 +92,54 @@ const getInput = (states: State[]) => {
     };
 };
 
-const getSymHistories = (history: PolicyAction[]) => {
+const getSymHistories = (history: PolicyAction[], rules: Rules) => {
     const symHistories = [history];
-    symHistories.push(history.map(({ action, policy }) => ({
-        action: 8 - action,
-        policy: policy.slice().reverse()
-    })));
+    const syms = [
+        PlaneSymmetry.Horizontal,
+        PlaneSymmetry.Vertical,
+        PlaneSymmetry.Rotation180
+    ].concat(rules.width === rules.height ? 
+        [
+            PlaneSymmetry.DiagonalSlash,
+            PlaneSymmetry.DiagonalBackSlash,
+            PlaneSymmetry.Rotation90,
+            PlaneSymmetry.Rotation270
+        ] : []
+    );
+
+    for (let sym of syms) {
+        const symHistory = history.map(({ action, policy }) => {
+            const actionPosition = rules.actionToIJ(action);
+            const symPosition = plane({
+                i: actionPosition.i,
+                j: actionPosition.j,
+                height: rules.height,
+                width: rules.width,
+                sym
+            });
+            const symAction = rules.positionToAction(symPosition);
+            const symPolicy = policy.map((_, index) => {
+                const position = rules.actionToIJ(index + 1);
+                const symPosition = plane({
+                    i: position.i,
+                    j: position.j,
+                    height: rules.height,
+                    width: rules.width,
+                    sym
+                });
+                const symIndex = rules.positionToAction(
+                    symPosition
+                ) - 1;
+                const symValue = policy[symIndex];
+                return symValue;
+            });
+            return {
+                action: symAction,
+                policy: symPolicy
+            } as PolicyAction
+        });
+        symHistories.push(symHistory);
+    }
     return symHistories;
 };
 
@@ -153,7 +196,10 @@ export default class Model implements GameModel {
         const outputs = [] as Output[];
         const pairs = [] as Pair[];
         for (let gameHistory of gameHistories) {
-            const symHistories = getSymHistories(gameHistory.history);
+            const symHistories = getSymHistories(
+                gameHistory.history,
+                this.rules
+            );
             for (let policyActions of symHistories) {
                 const history = policyActions.map(({action}) => action);
                 const states = getStates(history, this.rules);

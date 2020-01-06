@@ -1,0 +1,13 @@
+.Tile:hover {
+    cursor: pointer;
+}
+
+.Tile--Empty {
+    fill: white;
+}
+.Tile--X {
+    fill: yellow;
+}
+.Tile--O {
+    fill: red;
+}
