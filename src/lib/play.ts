@@ -119,6 +119,7 @@ interface GetLevelOptions {
     startLevel: number[];
     planCount?: number;
     alwaysTryAllPlayers?: boolean;
+    maxLevel?: number;
 }
   
 const getLevel = async (options: GetLevelOptions) => {
@@ -128,6 +129,7 @@ const getLevel = async (options: GetLevelOptions) => {
         model: options.model
     };
     const startLevel = options.startLevel;
+    const maxLevel = options.maxLevel || 15;
     let player1Level = startLevel[0];
     let player2Level = startLevel[1];
     const alwaysTryAllPlayers = options.alwaysTryAllPlayers || false;
@@ -135,6 +137,9 @@ const getLevel = async (options: GetLevelOptions) => {
     for (let level = player1Level; true; level++) {
         if (level === 1) {
             continue;
+        }
+        if ( level > maxLevel ) {
+            break;
         }
         const pureMctsOptions = {
             gameRules: options.gameRules,
@@ -165,6 +170,9 @@ const getLevel = async (options: GetLevelOptions) => {
     for (let level = player2Level; true; level++) {
         if (level === 1) {
             continue;
+        }
+        if ( level > maxLevel ) {
+            break;
         }
         const pureMctsOptions = {
             gameRules: options.gameRules,

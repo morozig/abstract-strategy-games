@@ -5,17 +5,27 @@ import {
 } from './lib/play';
 import Game from '../src/interfaces/game';
 
-import GameClass from './games/four-row';
-// import Random from './agents/random';
+// import GameClass from './games/four-row';
+import GameClass from './games/xos';
+
 import GameHistory from './interfaces/game-history';
 import {
-    getModels, getHistories, loadHistory, saveHistory, loadResult, saveResult
+    getModels,
+    getHistories,
+    loadHistory,
+    saveHistory,
+    loadResult,
+    saveResult
 } from './lib/api';
 import Mcts from './agents/mcts';
+
+const planCount = 10;
+const maxLevel = 15;
 
 const trainMcts = async (game: Game) => {
     const modelName = 'mcts-5000';
     const models = await getModels(game.name);
+    console.log(game.name, models);
     if (models.includes(modelName)) {
         console.log(`${modelName} trained!`);
         return;
@@ -35,7 +45,7 @@ const trainMcts = async (game: Game) => {
         const rules = game.rules;
         const pureMctsOptions = {
             gameRules: rules,
-            planCount: 5000
+            planCount: 500
         };
         const player1 = new Mcts(pureMctsOptions);
         const player2 = new Mcts(pureMctsOptions);
@@ -93,7 +103,8 @@ const trainGeneration = async (
             gameRules: rules,
             model,
             startLevel: previousModelLevel,
-            planCount: 50
+            planCount,
+            maxLevel
         });
         previousModelLevel[0] = model0Level[0];
         previousModelLevel[1] = model0Level[1];
@@ -116,7 +127,7 @@ const trainGeneration = async (
             model1: model,
             model2: model,
             gamesCount: 100,
-            planCount: 50,
+            planCount,
             randomize: true
         });
 
@@ -132,7 +143,8 @@ const trainGeneration = async (
         gameRules: rules,
         model,
         startLevel: previousModelLevel,
-        planCount: 50
+        planCount,
+        maxLevel
     });
     console.log(`previous level: ${previousModelLevel}`);
     console.log(`current level: ${modelLevel}`);
@@ -151,7 +163,7 @@ const trainGeneration = async (
         model2: previousModel,
         gamesCount: gamesCount,
         switchSides: true,
-        planCount: 50,
+        planCount,
         randomize: true
     });
     const lost = contest
@@ -210,10 +222,10 @@ const trainAlpha = async (game: Game) => {
 const run = async () => {
     console.log('train started');
 
-    const game = new GameClass();
+    const game = new GameClass(3, 3, 3);
 
     // await trainMcts(game);
-    // console.log(trainMcts);
+    console.log(trainMcts);
     // console.log(trainAlpha);
     await trainAlpha(game);
 };

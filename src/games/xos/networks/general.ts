@@ -1,5 +1,4 @@
 import * as tf from '@tensorflow/tfjs';
-import { countResidualLayers, copyWeights } from '../../lib/networks';
 
 const numFilters = 512;
 const defaultNumLayers = 4;
@@ -7,25 +6,26 @@ const numEpochs = 10;
 const dropout = 0.3;
 
 interface Options {
-    historyDepth: number;
-    useColor: boolean;
+    height: number;
+    width: number;
+    depth: number;
 }
 
 export default class Network {
     private model: tf.LayersModel;
-    private historyDepth: number;
-    private useColor: boolean;
+    private height: number;
+    private width: number;
+    private depth: number;
     constructor(options: Options) {
-        this.historyDepth = options.historyDepth;
-        this.useColor = options.useColor;
+        this.height = options.height;
+        this.width = options.width;
+        this.depth = options.depth;
         this.model = this.createModel();
         this.compile();
     }
     private createModel(numLayers=defaultNumLayers){
-        const colorDepth = this.useColor ? 1 : 0;
-        const depth = this.historyDepth * 2 + colorDepth;
         const input = tf.input({
-            shape: [6, 7, depth]
+            shape: [this.height, this.width, this.depth]
         });
 
         let network = tf.layers.conv2d({
@@ -216,12 +216,6 @@ export default class Network {
         this.compile();
     }
     addLayer() {
-        const numLayers = countResidualLayers(this.model);
-        console.log(`new layer: ${numLayers + 1}`);
-        const newModel = this.createModel(numLayers + 1);
-        copyWeights(this.model, newModel);
-        this.model.dispose();
-        this.model = newModel;
-        this.compile();
+
     }
 };

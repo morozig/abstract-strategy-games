@@ -1,13 +1,24 @@
-.Tile:hover {
-    cursor: pointer;
+.Tile {
+    fill: transparent;
+}
+
+
+.Tile-border {
+    stroke-width: 0.5;
+    stroke: #eeeeee;
 }
 
 .Tile--Empty {
-    fill: white;
+    cursor: pointer;
+    stroke: transparent;
+    fill: transparent;
 }
+
 .Tile--X {
-    fill: yellow;
+    stroke-width: 1;
+    stroke: #00f;
 }
 .Tile--O {
-    fill: red;
+    stroke-width: 1;
+    stroke: #ff0505;
 }

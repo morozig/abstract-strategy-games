@@ -1,14 +1,15 @@
 import React, { useRef } from 'react';
 import './App.css';
-import Game from '../game';
-import FourRow from '../../games/four-row';
+import GameComponent from '../game';
+// import Game from '../../games/four-row';
+import Game from '../../games/xos';
 
 const App: React.FC = () => {
-    const gameRef = useRef(new FourRow());
+    const gameRef = useRef(new Game(3, 3, 3));
 
     return (
         <div className={'App'}>
-            <Game
+            <GameComponent
                 game={gameRef.current}
             />
         </div>

@@ -1,30 +1,36 @@
 import * as tf from '@tensorflow/tfjs';
-import { residualNetwork2D, convLayer2D, countResidualLayers, copyWeights } from '../../lib/networks';
+import {
+    residualNetwork2D,
+    convLayer2D,
+    countResidualLayers,
+    copyWeights
+} from '../../../lib/networks';
 
 const numFilters = 16;
 const defaultNumLayers = 2;
 const numEpochs = 40;
 
 interface Options {
-    historyDepth: number;
-    useColor: boolean;
+    height: number;
+    width: number;
+    depth: number;
 }
 
 export default class Network {
     private model: tf.LayersModel;
-    private historyDepth: number;
-    private useColor: boolean;
+    private height: number;
+    private width: number;
+    private depth: number;
     constructor(options: Options) {
-        this.historyDepth = options.historyDepth;
-        this.useColor = options.useColor;
+        this.height = options.height;
+        this.width = options.width;
+        this.depth = options.depth;
         this.model = this.createModel();
         this.compile();
     }
     private createModel(numLayers=defaultNumLayers){
-        const colorDepth = this.useColor ? 1 : 0;
-        const depth = this.historyDepth * 2 + colorDepth;
         const input = tf.input({
-            shape: [6, 7, depth]
+            shape: [this.height, this.width, this.depth]
         });
 
         let network = residualNetwork2D(input, {
@@ -37,15 +43,10 @@ export default class Network {
             numFilters: 1,
             name: 'policy_conv2d'
         });
-        policy = tf.layers.maxPooling2d(
-            {
-                poolSize: [6, 1]
-            }
-        ).apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.flatten()
             .apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.dense({
-            units: 7,
+            units: this.height * this.width,
             name: 'policy_dense'
         }).apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.softmax()

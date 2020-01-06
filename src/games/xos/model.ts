@@ -10,7 +10,7 @@ import Network from './networks/residual';
 import Batcher from '../../lib/batcher';
 import config from '../../config';
 import PolicyAction from '../../interfaces/policy-action';
-import { softMax } from '../../lib/helpers';
+// import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
 
 type Input = number[][][];
@@ -30,7 +30,7 @@ const getHash = (state: State) => {
         .join('');
 };
 
-const getInput = (states: State[]) => {
+const getInput = (states: State[], rules: Rules) => {
     const lastState = states[states.length - 1];
     const playerIndex = lastState.playerIndex;
     const enemyIndex = 1 - playerIndex;
@@ -39,9 +39,9 @@ const getInput = (states: State[]) => {
 
     const input = [] as Input;
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < rules.height; i++) {
         input.push([]);
-        for (let j = 0; j < 7; j++) {
+        for (let j = 0; j < rules.width; j++) {
             input[i].push([]);
             const color = 1 - playerIndex;
             const playerHistory = states
@@ -156,8 +156,8 @@ const getStates = (history: number[], rules: Rules) => {
 };
 
 const getOutput = (reward: number, policy: number[]) => {
-    // const policyOutput = policy;
-    const policyOutput = softMax(policy, 0.2);
+    const policyOutput = policy;
+    // const policyOutput = softMax(policy, 0.2);
     const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };
@@ -173,12 +173,14 @@ export default class Model implements GameModel {
     private network: Network;
     private gameName: string;
     private batcher: Batcher<Input,Output> | null = null;
+    private depth = historyDepth * 2 + (useColor ? 1 : 0);
     constructor(gameName: string, rules: Rules, parallel = false) {
         this.gameName = gameName;
         this.rules = rules;
         this.network = new Network({
-            historyDepth,
-            useColor
+            height: rules.height,
+            width: rules.width,
+            depth: this.depth
         });
         if (parallel) {
             this.batcher = new Batcher(
@@ -206,7 +208,7 @@ export default class Model implements GameModel {
                 states.pop();
                 for (let i = 0; i < states.length; i++) {
                     const layerStates = states.slice(0, i + 1);
-                    const { input } = getInput(layerStates);
+                    const { input } = getInput(layerStates, this.rules);
                     const lastState = states[i];
                     const lastPlayerIndex = lastState.playerIndex;
                     const reward = gameHistory.rewards[lastPlayerIndex];
@@ -242,7 +244,7 @@ export default class Model implements GameModel {
     }
     async predict(history: number[]) {
         const states = getStates(history, this.rules);
-        const { input } = getInput(states);
+        const { input } = getInput(states, this.rules);
         let output: Output;
         if (!this.batcher) {
             [output] = await this.network.predict([input]);
