@@ -10,7 +10,7 @@ import Network from './networks/residual';
 import Batcher from '../../lib/batcher';
 import config from '../../config';
 import PolicyAction from '../../interfaces/policy-action';
-// import { softMax } from '../../lib/helpers';
+import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
 
 type Input = number[][][];
@@ -22,7 +22,7 @@ interface Pair {
 };
 
 const historyDepth = 1;
-const useColor = false;
+const useColor = true;
 
 const getHash = (state: State) => {
     return state.board
@@ -156,8 +156,8 @@ const getStates = (history: number[], rules: Rules) => {
 };
 
 const getOutput = (reward: number, policy: number[]) => {
-    const policyOutput = policy;
-    // const policyOutput = softMax(policy, 0.2);
+    // const policyOutput = policy;
+    const policyOutput = softMax(policy, 0.5);
     const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };

@@ -99,15 +99,15 @@ const trainGeneration = async (
             previousModelLevel[1] = previousModelResult.level[1];
         }
     } else {
-        const model0Level = await getLevel({
+        const initLevel = await getLevel({
             gameRules: rules,
             model,
             startLevel: previousModelLevel,
             planCount,
             maxLevel
         });
-        previousModelLevel[0] = model0Level[0];
-        previousModelLevel[1] = model0Level[1];
+        previousModelLevel[0] = initLevel[0];
+        previousModelLevel[1] = initLevel[1];
     }
 
     const modelHistories = [] as GameHistory[];
@@ -146,19 +146,9 @@ const trainGeneration = async (
         planCount,
         maxLevel
     });
-    const previousLevelTxt = previousModelLevel
-        .map(level => 
-            level > maxLevel ?
-                `${maxLevel}+` : `${level}`
-        );
-    const LevelTxt = previousModelLevel
-        .map(level => 
-            level > maxLevel ?
-                `${maxLevel}+` : `${level}`
-        );
     
-    console.log(`previous level: ${previousLevelTxt}`);
-    console.log(`current level: ${LevelTxt}`);
+    console.log(`previous level: ${previousModelLevel}`);
+    console.log(`current level: ${modelLevel}`);
 
     if (modelLevel[0] < previousModelLevel[0] || 
         modelLevel[1] < previousModelLevel[1]
@@ -235,8 +225,8 @@ const run = async () => {
 
     const game = new GameClass(3, 3, 3);
 
-    // await trainMcts(game);
-    console.log(trainMcts);
+    await trainMcts(game);
+    // console.log(trainMcts);
     // console.log(trainAlpha);
     await trainAlpha(game);
 };

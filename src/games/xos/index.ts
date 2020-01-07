@@ -22,7 +22,7 @@ export default class Xos implements Game {
         {
             type: GamePlayerType.Alpha,
             planCount: 10,
-            modelName: 'alpha-8'
+            modelName: 'alpha-5'
         },
     ] as GamePlayer[];
     constructor(height: number, width: number, same: number) {

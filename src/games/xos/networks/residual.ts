@@ -6,7 +6,7 @@ import {
     copyWeights
 } from '../../../lib/networks';
 
-const numFilters = 16;
+const numFilters = 8;
 const defaultNumLayers = 2;
 const numEpochs = 40;
 
@@ -35,7 +35,8 @@ export default class Network {
 
         let network = residualNetwork2D(input, {
             numLayers,
-            numFilters
+            numFilters,
+            kernelSize: 2
         });
 
         let policy = convLayer2D(network, {
