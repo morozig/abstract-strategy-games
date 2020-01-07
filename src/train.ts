@@ -146,8 +146,19 @@ const trainGeneration = async (
         planCount,
         maxLevel
     });
-    console.log(`previous level: ${previousModelLevel}`);
-    console.log(`current level: ${modelLevel}`);
+    const previousLevelTxt = previousModelLevel
+        .map(level => 
+            level > maxLevel ?
+                `${maxLevel}+` : `${level}`
+        );
+    const LevelTxt = previousModelLevel
+        .map(level => 
+            level > maxLevel ?
+                `${maxLevel}+` : `${level}`
+        );
+    
+    console.log(`previous level: ${previousLevelTxt}`);
+    console.log(`current level: ${LevelTxt}`);
 
     if (modelLevel[0] < previousModelLevel[0] || 
         modelLevel[1] < previousModelLevel[1]
