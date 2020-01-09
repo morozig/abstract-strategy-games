@@ -1,8 +1,8 @@
 import * as tf from '@tensorflow/tfjs';
 
-const numFilters = 512;
+const numFilters = 16;
 const defaultNumLayers = 4;
-const numEpochs = 10;
+const numEpochs = 20;
 const dropout = 0.3;
 
 interface Options {
@@ -29,7 +29,7 @@ export default class Network {
         });
 
         let network = tf.layers.conv2d({
-            kernelSize: 3,
+            kernelSize: 2,
             filters: numFilters,
             strides: 1,
             padding: 'same',
@@ -43,35 +43,7 @@ export default class Network {
         }).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.conv2d({
-            kernelSize: 3,
-            filters: numFilters,
-            strides: 1,
-            padding: 'same',
-            useBias: false
-        }).apply(network) as tf.SymbolicTensor;
-        network = tf.layers.batchNormalization({
-            axis: 3
-        }).apply(network) as tf.SymbolicTensor;
-        network = tf.layers.activation({
-            activation: 'relu'
-        }).apply(network) as tf.SymbolicTensor;
-
-        network = tf.layers.conv2d({
-            kernelSize: 3,
-            filters: numFilters,
-            strides: 1,
-            padding: 'valid',
-            useBias: false
-        }).apply(network) as tf.SymbolicTensor;
-        network = tf.layers.batchNormalization({
-            axis: 3
-        }).apply(network) as tf.SymbolicTensor;
-        network = tf.layers.activation({
-            activation: 'relu'
-        }).apply(network) as tf.SymbolicTensor;
-
-        network = tf.layers.conv2d({
-            kernelSize: 3,
+            kernelSize: 2,
             filters: numFilters,
             strides: 1,
             padding: 'valid',
@@ -88,7 +60,7 @@ export default class Network {
         ).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.dense({
-            units: 1024
+            units: 32
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 1
@@ -101,7 +73,7 @@ export default class Network {
         }).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.dense({
-            units: 512
+            units: 16
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 1
@@ -116,7 +88,7 @@ export default class Network {
 
 
         let policy = tf.layers.dense({
-            units: 7
+            units: this.height * this.width
         }).apply(network) as tf.SymbolicTensor;
         policy = tf.layers.softmax(
         ).apply(policy) as tf.SymbolicTensor;
@@ -140,7 +112,7 @@ export default class Network {
         return model;
     };
     private compile() {
-        const optimizer = tf.train.adam();
+        const optimizer = tf.train.adam(0.1);
         // const optimizer = tf.train.sgd(0.1);
 
         this.model.compile({

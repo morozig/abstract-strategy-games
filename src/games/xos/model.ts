@@ -5,12 +5,12 @@ import {
     State
 } from './board';
 import Rules from './rules';
-// import Network from './general';
-import Network from './networks/residual';
+import Network from './networks/general';
+// import Network from './networks/residual';
 import Batcher from '../../lib/batcher';
 import config from '../../config';
 import PolicyAction from '../../interfaces/policy-action';
-import { softMax } from '../../lib/helpers';
+// import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
 
 type Input = number[][][];
@@ -156,8 +156,8 @@ const getStates = (history: number[], rules: Rules) => {
 };
 
 const getOutput = (reward: number, policy: number[]) => {
-    // const policyOutput = policy;
-    const policyOutput = softMax(policy, 0.5);
+    const policyOutput = policy;
+    // const policyOutput = softMax(policy, 0.5);
     const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };

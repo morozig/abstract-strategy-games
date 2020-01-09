@@ -160,7 +160,7 @@ export default class Mcts implements PolicyAgent{
         const probs = this.root.children.map(
             child => child.visits / this.root.visits
         );
-        const temp = this.randomize ? 0.1 : 0;
+        const temp = this.randomize ? 0.5 : 0;
         const index = indexSoftMax(probs, temp);
         const action = this.root.children[index].action;
         for (let i = 0; i < this.root.children.length; i++) {
