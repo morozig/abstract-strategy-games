@@ -7,6 +7,8 @@ import Alpha from '../agents/alpha';
 import { durationHR } from './helpers';
 import Mcts from '../agents/mcts';
 
+const levelGamesCount = 5;
+
 const play = async (
     gameRules: GameRules,
     agents: PolicyAgent[],
@@ -143,17 +145,26 @@ const getLevel = async (options: GetLevelOptions) => {
         }
         const pureMctsOptions = {
             gameRules: options.gameRules,
-            planCount: Math.pow(2, level - 2)
+            planCount: Math.pow(2, level - 2),
+            randomize: true
         };
         const player1 = new Alpha(alphaOptions);
         const player2 = new Mcts(pureMctsOptions);
         const agents = [player1, player2];
-        const { rewards } = await play(
-            options.gameRules,
-            agents,
-            `${level}`
-        );
-        if (rewards[0] < 0) {
+        let score = 0;
+        for (let i = 1; i <= levelGamesCount; i++) {
+            const { rewards } = await play(
+                options.gameRules,
+                agents,
+                `${level}.${i}`
+            );
+            if (rewards[0] < 0) {
+                break;
+            } else {
+                score += 1;
+            }
+        }
+        if (score < levelGamesCount) {
             if (level === startLevel[0]) {
                 player1Level -= 1;
             }
@@ -176,17 +187,26 @@ const getLevel = async (options: GetLevelOptions) => {
         }
         const pureMctsOptions = {
             gameRules: options.gameRules,
-            planCount: Math.pow(2, level - 2)
+            planCount: Math.pow(2, level - 2),
+            randomize: true
         };
         const player1 = new Mcts(pureMctsOptions);
         const player2 = new Alpha(alphaOptions);
         const agents = [player1, player2];
-        const { rewards } = await play(
-            options.gameRules,
-            agents,
-            `${level}`
-        );
-        if (rewards[1] < 0) {
+        let score = 0;
+        for (let i = 1; i <= levelGamesCount; i++) {
+            const { rewards } = await play(
+                options.gameRules,
+                agents,
+                `${level}.${i}`
+            );
+            if (rewards[1] < 0) {
+                break;
+            } else {
+                score += 1;
+            }
+        }
+        if (score < levelGamesCount) {
             if (level === startLevel[1]) {
                 player2Level -= 1;
             }

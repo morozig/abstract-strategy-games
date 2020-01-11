@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 
 const numFilters = 16;
 const defaultNumLayers = 4;
-const numEpochs = 20;
+const numEpochs = 10;
 const dropout = 0.3;
 
 interface Options {
@@ -112,7 +112,7 @@ export default class Network {
         return model;
     };
     private compile() {
-        const optimizer = tf.train.adam(0.1);
+        const optimizer = tf.train.adam(0.001);
         // const optimizer = tf.train.sgd(0.1);
 
         this.model.compile({

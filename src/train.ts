@@ -19,7 +19,7 @@ import {
 } from './lib/api';
 import Mcts from './agents/mcts';
 
-const planCount = 10;
+const planCount = 50;
 const maxLevel = 15;
 
 const trainMcts = async (game: Game) => {
@@ -157,7 +157,7 @@ const trainGeneration = async (
         return false;
     }
 
-    const gamesCount = 5;
+    const gamesCount = 25;
     const contest = await playAlpha({
         gameRules: rules,
         model1: model,
@@ -167,18 +167,18 @@ const trainGeneration = async (
         planCount,
         randomize: true
     });
-    const lost = contest
+    const points = contest
         .slice(0, gamesCount)
-        .filter(({ rewards }) => rewards[0] === -1)
+        .filter(({ rewards }) => rewards[0] === 1)
         .length
         + contest
         .slice(gamesCount)
-        .filter(({ rewards }) => rewards[1] === -1)
+        .filter(({ rewards }) => rewards[1] !== -1)
         .length;
-    const modelScore = 2 * gamesCount - lost;
+    const modelScore = points / (2 * gamesCount );
     console.log(`score: ${modelScore}`);
         
-    if (modelScore > gamesCount + 1) {
+    if (modelScore >= 0.6) {
         await model.save(modelName);
         await saveResult(
             game.name,
@@ -188,7 +188,7 @@ const trainGeneration = async (
             }
         );
     }
-    return modelScore > gamesCount + 1;
+    return modelScore >= 0.6;
 };
 
 const trainAlpha = async (game: Game) => {
