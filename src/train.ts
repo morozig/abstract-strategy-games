@@ -197,7 +197,7 @@ const trainAlpha = async (game: Game) => {
         Math.max(...generations) + 1 : 1;
     for (let i = lastGeneration; true; i++) {
         let tries = 1;
-        const maxTries = 10;
+        const maxTries = 20;
         while (tries <= maxTries) {
             console.log(`train ${i}:${tries}`);
             const improve = tries > maxTries / 2;
