@@ -6,6 +6,7 @@ import PolicyAgent from '../interfaces/policy-agent';
 
 const bonusScale = 1;
 // const randomizeTemp = 0.1;
+const printPolicy = false;
 
 type Predictor = (history: number[]) => Promise<GamePrediction>;
 
@@ -63,6 +64,10 @@ class Node {
     children: Node[] = [];
     totalValue = 0;
     meanValue = 0;
+    prediction?: {
+        reward: number,
+        policy: number[]
+    }
     constructor(options: NodeOptions) {
         this.visits = 0;
         this.parent = options.parent;
@@ -173,7 +178,9 @@ export default class Mcts implements PolicyAgent{
         return { action, policy };
     }
     step(action: number) {
-        console.log(this.root.children.map(child => [child.action, child.prob]));
+        if (printPolicy && this.root.prediction) {
+            console.log(this.root.prediction);
+        }
         const child = this.root.children.find(
             node => node.action === action
         );
@@ -212,6 +219,7 @@ export default class Mcts implements PolicyAgent{
             node.getHistory()
         );
         const { reward, policy } = await this.predict(history);
+        node.prediction = { reward, policy };
         const availables = this.gameRules.availables(
             node.stepResult.state
         );

@@ -125,6 +125,7 @@ interface GetLevelOptions {
 }
   
 const getLevel = async (options: GetLevelOptions) => {
+    console.log(`GetLevel Started ${options.startLevel}`);
     const alphaOptions = {
         gameRules: options.gameRules,
         planCount: options.planCount,
@@ -143,16 +144,16 @@ const getLevel = async (options: GetLevelOptions) => {
         if ( level > maxLevel ) {
             break;
         }
-        const pureMctsOptions = {
-            gameRules: options.gameRules,
-            planCount: Math.pow(2, level - 2),
-            randomize: true
-        };
-        const player1 = new Alpha(alphaOptions);
-        const player2 = new Mcts(pureMctsOptions);
-        const agents = [player1, player2];
         let score = 0;
         for (let i = 1; i <= levelGamesCount; i++) {
+            const pureMctsOptions = {
+                gameRules: options.gameRules,
+                planCount: Math.pow(2, level - 2),
+                randomize: i !== 1
+            };
+            const player1 = new Alpha(alphaOptions);
+            const player2 = new Mcts(pureMctsOptions);
+            const agents = [player1, player2];
             const { rewards } = await play(
                 options.gameRules,
                 agents,
@@ -185,16 +186,16 @@ const getLevel = async (options: GetLevelOptions) => {
         if ( level > maxLevel ) {
             break;
         }
-        const pureMctsOptions = {
-            gameRules: options.gameRules,
-            planCount: Math.pow(2, level - 2),
-            randomize: true
-        };
-        const player1 = new Mcts(pureMctsOptions);
-        const player2 = new Alpha(alphaOptions);
-        const agents = [player1, player2];
         let score = 0;
         for (let i = 1; i <= levelGamesCount; i++) {
+            const pureMctsOptions = {
+                gameRules: options.gameRules,
+                planCount: Math.pow(2, level - 2),
+                randomize: i !== 1
+            };
+            const player1 = new Mcts(pureMctsOptions);
+            const player2 = new Alpha(alphaOptions);
+            const agents = [player1, player2];
             const { rewards } = await play(
                 options.gameRules,
                 agents,
@@ -216,6 +217,7 @@ const getLevel = async (options: GetLevelOptions) => {
             player2Level = level;
         }
     }
+    console.log(`GetLevel Finished ${[ player1Level, player2Level ]}`);
     return [ player1Level, player2Level ];
 };
 

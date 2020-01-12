@@ -21,8 +21,8 @@ export default class Xos implements Game {
         },
         {
             type: GamePlayerType.Alpha,
-            planCount: 50,
-            modelName: 'alpha-4'
+            planCount: 10,
+            modelName: '2020-01-12'
         },
     ] as GamePlayer[];
     constructor(height: number, width: number, same: number) {

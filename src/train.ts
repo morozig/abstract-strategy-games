@@ -21,6 +21,7 @@ import Mcts from './agents/mcts';
 
 const planCount = 50;
 const maxLevel = 15;
+const useLevels = true;
 
 const trainMcts = async (game: Game) => {
     const modelName = 'mcts-5000';
@@ -63,10 +64,11 @@ const trainMcts = async (game: Game) => {
         await saveHistory(game.name, modelName, modelHistories);
     }
     const model = game.createModel();
-    const trainSuccess = await model.train(modelHistories);
-    if (trainSuccess) {
-        await model.save(modelName);
-    }
+    // const trainSuccess = await model.train(modelHistories);
+    await model.train(modelHistories);
+    // if (trainSuccess) {
+    await model.save(modelName);
+    // }
 };
 
 const trainGeneration = async (
@@ -90,24 +92,17 @@ const trainGeneration = async (
     if (previousGeneration > 0) {
         await previousModel.load(previousModelName);
         await model.load(previousModelName);
-        const previousModelResult = await loadResult(
-            game.name,
-            previousModelName
-        );
-        if (previousModelResult.level) {
-            previousModelLevel[0] = previousModelResult.level[0];
-            previousModelLevel[1] = previousModelResult.level[1];
+
+        if (useLevels) {
+            const previousModelResult = await loadResult(
+                game.name,
+                previousModelName
+            );
+            if (previousModelResult.level) {
+                previousModelLevel[0] = previousModelResult.level[0];
+                previousModelLevel[1] = previousModelResult.level[1];
+            }
         }
-    } else {
-        const initLevel = await getLevel({
-            gameRules: rules,
-            model,
-            startLevel: previousModelLevel,
-            planCount,
-            maxLevel
-        });
-        previousModelLevel[0] = initLevel[0];
-        previousModelLevel[1] = initLevel[1];
     }
 
     const modelHistories = [] as GameHistory[];
@@ -139,24 +134,6 @@ const trainGeneration = async (
     }
     await model.train(modelHistories, {improve});
 
-    const modelLevel = await getLevel({
-        gameRules: rules,
-        model,
-        startLevel: previousModelLevel,
-        planCount,
-        maxLevel
-    });
-    
-    console.log(`previous level: ${previousModelLevel}`);
-    console.log(`current level: ${modelLevel}`);
-
-    if (modelLevel[0] < previousModelLevel[0] || 
-        modelLevel[1] < previousModelLevel[1]
-    ) {
-        console.log('Failed to beat previous level');
-        return false;
-    }
-
     const gamesCount = 25;
     const contest = await playAlpha({
         gameRules: rules,
@@ -179,14 +156,33 @@ const trainGeneration = async (
     console.log(`score: ${modelScore}`);
         
     if (modelScore >= 0.6) {
-        await model.save(modelName);
-        await saveResult(
-            game.name,
-            modelName,
-            {
-                level: modelLevel
+        if (useLevels) {
+            const modelLevel = await getLevel({
+                gameRules: rules,
+                model,
+                startLevel: previousModelLevel,
+                planCount,
+                maxLevel
+            });
+            
+            console.log(`previous level: ${previousModelLevel}`);
+            console.log(`current level: ${modelLevel}`);
+        
+            if (modelLevel[0] < previousModelLevel[0] || 
+                modelLevel[1] < previousModelLevel[1]
+            ) {
+                console.log('Failed to beat previous level');
+                return false;
             }
-        );
+            await saveResult(
+                game.name,
+                modelName,
+                {
+                    level: modelLevel
+                }
+            );
+        }
+        await model.save(modelName);
     }
     return modelScore >= 0.6;
 };
