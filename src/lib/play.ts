@@ -159,7 +159,7 @@ const getLevel = async (options: GetLevelOptions) => {
                 agents,
                 `${level}.${i}`
             );
-            if (rewards[0] < 0) {
+            if (rewards[0] < 1) {
                 break;
             } else {
                 score += 1;

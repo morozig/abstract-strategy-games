@@ -1,15 +1,8 @@
 import * as tf from '@tensorflow/tfjs';
-import {
-    residualNetwork2D,
-    countResidualLayers,
-    copyWeights,
-    denseLayer
-} from '../../../lib/networks';
 
-// const numFilters = 8;
-const defaultNumLayers = 1;
+const numFilters = 32;
+const defaultNumLayers = 4;
 const numEpochs = 10;
-const dropout = 0.3;
 
 interface Options {
     height: number;
@@ -34,39 +27,74 @@ export default class Network {
             shape: [this.height, this.width, this.depth]
         });
 
-        const numFilters = this.height * this.width;
-
-        let network = residualNetwork2D(input, {
-            numLayers,
-            numFilters,
-            kernelSize: 2
-        });
-
-        network = tf.layers.flatten(
-        ).apply(network) as tf.SymbolicTensor;
-
-        network = denseLayer(network, {
-            name: 'dense1',
-            units: numFilters * 2,
-            dropout
-        });
-        network = denseLayer(network, {
-            name: 'dense2',
-            units: numFilters,
-            dropout
-        });
-
-        let policy = tf.layers.dense({
-            units: this.height * this.width,
-            name: 'policy_dense'
+        let network = tf.layers.conv2d({
+            kernelSize: 2,
+            filters: numFilters,
+            strides: 1,
+            padding: 'same',
+            useBias: false
+        }).apply(input) as tf.SymbolicTensor;
+        network = tf.layers.batchNormalization({
+            axis: 3
         }).apply(network) as tf.SymbolicTensor;
+        network = tf.layers.activation({
+            activation: 'relu'
+        }).apply(network) as tf.SymbolicTensor;
+
+        network = tf.layers.conv2d({
+            kernelSize: 2,
+            filters: numFilters,
+            strides: 1,
+            padding: 'same',
+            useBias: false
+        }).apply(network) as tf.SymbolicTensor;
+        network = tf.layers.batchNormalization({
+            axis: 3
+        }).apply(network) as tf.SymbolicTensor;
+        network = tf.layers.activation({
+            activation: 'relu'
+        }).apply(network) as tf.SymbolicTensor;
+
+
+        let policy = tf.layers.conv2d({
+            kernelSize: 1,
+            filters: 1,
+            strides: 1,
+            padding: 'same',
+            useBias: false
+        }).apply(network) as tf.SymbolicTensor;
+        policy = tf.layers.batchNormalization({
+            axis: 3
+        }).apply(policy) as tf.SymbolicTensor;
+        policy = tf.layers.activation({
+            activation: 'relu'
+        }).apply(policy) as tf.SymbolicTensor;
+        policy = tf.layers.flatten(
+        ).apply(policy) as tf.SymbolicTensor;
+        policy = tf.layers.dense({
+            units: this.height * this.width
+        }).apply(policy) as tf.SymbolicTensor;
         policy = tf.layers.softmax(
         ).apply(policy) as tf.SymbolicTensor;
 
-        let reward = tf.layers.dense({
-            units: 1,
-            name: 'reward_dense'
+        let reward = tf.layers.conv2d({
+            kernelSize: 2,
+            filters: 1,
+            strides: 1,
+            padding: 'valid',
+            useBias: false
         }).apply(network) as tf.SymbolicTensor;
+        reward = tf.layers.batchNormalization({
+            axis: 3
+        }).apply(reward) as tf.SymbolicTensor;
+        reward = tf.layers.activation({
+            activation: 'relu'
+        }).apply(reward) as tf.SymbolicTensor;
+        reward = tf.layers.flatten(
+        ).apply(reward) as tf.SymbolicTensor;
+        reward = tf.layers.dense({
+            units: 1
+        }).apply(reward) as tf.SymbolicTensor;
         reward = tf.layers.activation({
             activation: 'tanh'
         }).apply(reward) as tf.SymbolicTensor;
@@ -83,7 +111,7 @@ export default class Network {
         return model;
     };
     private compile() {
-        const optimizer = tf.train.adam();
+        const optimizer = tf.train.adam(0.001);
         // const optimizer = tf.train.sgd(0.1);
 
         this.model.compile({
@@ -159,12 +187,6 @@ export default class Network {
         this.compile();
     }
     addLayer() {
-        const numLayers = countResidualLayers(this.model);
-        console.log(`new layer: ${numLayers + 1}`);
-        const newModel = this.createModel(numLayers + 1);
-        copyWeights(this.model, newModel);
-        this.model.dispose();
-        this.model = newModel;
-        this.compile();
+
     }
 };

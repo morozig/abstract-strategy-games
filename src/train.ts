@@ -219,7 +219,7 @@ const trainAlpha = async (game: Game) => {
 const run = async () => {
     console.log('train started');
 
-    const game = new GameClass(3, 3, 3);
+    const game = new GameClass(3, 4, 3);
 
     await trainMcts(game);
     // console.log(trainMcts);

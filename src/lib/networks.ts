@@ -82,6 +82,30 @@ const residualNetwork2D = (
     return network;
 };
 
+const denseLayer = (
+    input: tf.SymbolicTensor,
+    options: {
+        units: number;
+        dropout: number;
+        name: string;
+    }
+) => {
+    let network = tf.layers.dense({
+        units: options.units,
+        name: options.name
+    }).apply(input) as tf.SymbolicTensor;
+    network = tf.layers.batchNormalization({
+        name: `${options.name}_bn`,
+        axis: 1
+    }).apply(network) as tf.SymbolicTensor;
+    network = tf.layers.leakyReLU(
+    ).apply(network) as tf.SymbolicTensor;
+    network = tf.layers.dropout({
+        rate: options.dropout
+    }).apply(network) as tf.SymbolicTensor;
+    return network;
+};
+
 const copyWeights = (from: tf.LayersModel, to: tf.LayersModel) => {
     for (let sourceLayer of from.layers) {
         const sourceWeights = sourceLayer.getWeights();
@@ -110,5 +134,6 @@ export {
     convLayer2D,
     residualNetwork2D,
     copyWeights,
-    countResidualLayers
+    countResidualLayers,
+    denseLayer
 }
