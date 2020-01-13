@@ -159,7 +159,7 @@ const getLevel = async (options: GetLevelOptions) => {
                 agents,
                 `${level}.${i}`
             );
-            if (rewards[0] < 1) {
+            if (rewards[0] < 0) {
                 break;
             } else {
                 score += 1;
@@ -196,12 +196,12 @@ const getLevel = async (options: GetLevelOptions) => {
             const player1 = new Mcts(pureMctsOptions);
             const player2 = new Alpha(alphaOptions);
             const agents = [player1, player2];
-            const { history } = await play(
+            const { rewards } = await play(
                 options.gameRules,
                 agents,
                 `${level}.${i}`
             );
-            if (history.length < 6) {
+            if (rewards[1] < 0) {
                 break;
             } else {
                 score += 1;

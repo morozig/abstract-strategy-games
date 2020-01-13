@@ -150,7 +150,7 @@ const trainGeneration = async (
         .length
         + contest
         .slice(gamesCount)
-        .filter(({ rewards }) => rewards[1] !== -1)
+        .filter(({ rewards }) => rewards[1] === 1)
         .length;
     const modelScore = points / (2 * gamesCount );
     console.log(`score: ${modelScore}`);
@@ -219,7 +219,7 @@ const trainAlpha = async (game: Game) => {
 const run = async () => {
     console.log('train started');
 
-    const game = new GameClass(3, 4, 3);
+    const game = new GameClass(3, 4, 4);
 
     await trainMcts(game);
     // console.log(trainMcts);
