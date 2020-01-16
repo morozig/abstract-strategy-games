@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-const numFilters = 32;
+const numFilters = 64;
 const defaultNumLayers = 4;
 const numEpochs = 10;
 const dropout = 0.3;
@@ -60,7 +60,7 @@ export default class Network {
             kernelSize: 2,
             filters: numFilters,
             strides: 1,
-            padding: 'same',
+            padding: 'valid',
             useBias: false
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
