@@ -94,6 +94,22 @@ const trainGeneration = async (
         planCount,
         randomize: true
     });
+    const player1Won = contest
+        .slice(0, gamesCount)
+        .filter(({ rewards }) => rewards[0] === 1)
+        .length;
+    const player1Lost = contest
+        .slice(0, gamesCount)
+        .filter(({ rewards }) => rewards[0] === -1)
+        .length;
+    const player2Won = contest
+        .slice(gamesCount)
+        .filter(({ rewards }) => rewards[1] === 1)
+        .length;
+    const player2Lost = contest
+        .slice(gamesCount)
+        .filter(({ rewards }) => rewards[1] === -1)
+        .length;
     const points = contest
         .slice(0, gamesCount)
         .filter(({ rewards }) => rewards[0] === 1)
@@ -103,6 +119,12 @@ const trainGeneration = async (
         .filter(({ rewards }) => rewards[1] !== -1)
         .length;
     const modelScore = points / (2 * gamesCount );
+    console.log(
+        'player1Won', player1Won,
+        'player1Lost', player1Lost,
+        'player2Won', player2Won,
+        'player2Lost', player2Lost
+    );
     console.log(`score: ${modelScore}`);
         
     if (modelScore >= 0.6) {
