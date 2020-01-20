@@ -14,12 +14,14 @@ import {
     loadHistory,
     saveHistory,
     loadResult,
-    saveResult
+    saveResult,
+    getResults
 } from './lib/api';
 
 const planCount = 50;
 const maxLevel = 15;
 const useLevels = true;
+const winRate = 0.55;
 
 const trainGeneration = async (
     game: Game,
@@ -44,13 +46,34 @@ const trainGeneration = async (
         await model.load(previousModelName);
 
         if (useLevels) {
-            const previousModelResult = await loadResult(
-                game.name,
-                previousModelName
-            );
-            if (previousModelResult.level) {
-                previousModelLevel[0] = previousModelResult.level[0];
-                previousModelLevel[1] = previousModelResult.level[1];
+            const results = await getResults(game.name);
+            if (results.includes(previousModelName)) {
+                const previousModelResult = await loadResult(
+                    game.name,
+                    previousModelName
+                );
+                if (previousModelResult.level) {
+                    previousModelLevel[0] = previousModelResult.level[0];
+                    previousModelLevel[1] = previousModelResult.level[1];
+                }
+            } else {
+                previousModelLevel = await getLevel({
+                    gameRules: rules,
+                    model,
+                    startLevel: previousModelLevel,
+                    planCount,
+                    maxLevel
+                });
+                
+                console.log(`previous level: ${previousModelLevel}`);
+            
+                await saveResult(
+                    game.name,
+                    previousModelName,
+                    {
+                        level: previousModelLevel
+                    }
+                );
             }
         }
     }
@@ -110,24 +133,18 @@ const trainGeneration = async (
         .slice(gamesCount)
         .filter(({ rewards }) => rewards[1] === -1)
         .length;
-    const points = contest
-        .slice(0, gamesCount)
-        .filter(({ rewards }) => rewards[0] === 1)
-        .length
-        + contest
-        .slice(gamesCount)
-        .filter(({ rewards }) => rewards[1] !== -1)
-        .length;
-    const modelScore = points / (2 * gamesCount );
+    const modelScore = (player1Won + player2Won) / (
+        (player1Won + player1Lost + player2Won + player2Lost) || 1
+    );
     console.log(
         'player1Won', player1Won,
         'player1Lost', player1Lost,
         'player2Won', player2Won,
         'player2Lost', player2Lost
     );
-    console.log(`score: ${modelScore}`);
+    console.log(`score: ${modelScore.toFixed(2)}`);
         
-    if (modelScore >= 0.6) {
+    if (modelScore >= winRate) {
         if (useLevels) {
             const modelLevel = await getLevel({
                 gameRules: rules,
@@ -156,7 +173,7 @@ const trainGeneration = async (
         }
         await model.save(modelName);
     }
-    return modelScore >= 0.6;
+    return modelScore >= winRate;
 };
 
 const trainAlpha = async (game: Game) => {

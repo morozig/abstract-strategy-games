@@ -47,6 +47,13 @@ const saveHistory = async(
     );
 };
 
+const getResults = async (gameName: string) => {
+    const requestUrl = `/api/${gameName}/result`;
+    const resultsRequest = await fetch(requestUrl);
+    const results = await resultsRequest.json() as string[];
+    return results;
+};
+
 const loadResult = async(gameName: string, modelName: string) => {
     const requestUrl = `/data/${gameName}/result/${modelName}.json`;
     const resultRequest = await fetch(requestUrl);
@@ -84,6 +91,7 @@ export {
     getModels,
     saveHistory,
     loadHistory,
+    getResults,
     loadResult,
     saveResult
 }
