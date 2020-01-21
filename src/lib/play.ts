@@ -136,7 +136,7 @@ const getLevel = async (options: GetLevelOptions) => {
     let player1Level = startLevel[0];
     let player2Level = startLevel[1];
     const alwaysTryAllPlayers = options.alwaysTryAllPlayers || false;
-    console.log(`Current player1 level: ${player1Level}`);
+    
     for (let level = player1Level; true; level++) {
         if (level === 1) {
             continue;
