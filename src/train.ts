@@ -57,13 +57,23 @@ const trainGeneration = async (
                     previousModelLevel[1] = previousModelResult.level[1];
                 }
             } else {
-                previousModelLevel = await getLevel({
+                const { level, mistakes } = await getLevel({
                     gameRules: rules,
                     model,
                     startLevel: previousModelLevel,
                     planCount,
                     maxLevel
                 });
+
+                previousModelLevel = level;
+
+                if (mistakes.length) {
+                    await saveHistory(
+                        game.name,
+                        `${previousModelName}-mistakes`,
+                        mistakes
+                    );
+                }
                 
                 console.log(`previous level: ${previousModelLevel}`);
             
@@ -146,7 +156,7 @@ const trainGeneration = async (
         
     if (modelScore >= winRate) {
         if (useLevels) {
-            const modelLevel = await getLevel({
+            const { level, mistakes } = await getLevel({
                 gameRules: rules,
                 model,
                 startLevel: previousModelLevel,
@@ -155,21 +165,38 @@ const trainGeneration = async (
             });
             
             console.log(`previous level: ${previousModelLevel}`);
-            console.log(`current level: ${modelLevel}`);
+            console.log(`current level: ${level}`);
         
-            if (modelLevel[0] < previousModelLevel[0] || 
-                modelLevel[1] < previousModelLevel[1]
+            if (level[0] < previousModelLevel[0] || 
+                level[1] < previousModelLevel[1]
             ) {
                 console.log('Failed to beat previous level');
+                if (mistakes.length) {
+                    await saveHistory(
+                        game.name,
+                        `${modelName}-mistakes`,
+                        mistakes
+                    );
+                }
                 return false;
             }
             await saveResult(
                 game.name,
                 modelName,
                 {
-                    level: modelLevel
+                    level
                 }
             );
+            if (mistakes.length) {
+                const nextGeneration = generation + 1;
+                const nextModelName = `alpha-${nextGeneration}`;
+                await saveHistory(
+                    game.name,
+                    `${nextModelName}-mistakes`,
+                    mistakes
+                );
+            }
+
         }
         await model.save(modelName);
     }

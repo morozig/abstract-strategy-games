@@ -115,110 +115,155 @@ const playAlpha = async (options: PlayAlphaOptions) => {
     return gameHistories;
 };
 
-interface GetLevelOptions {
+interface CheckLevelOptions {
     model: GameModel;
     gameRules: GameRules;
-    startLevel: number[];
+    level: number;
+    playerIndex: number;
     planCount?: number;
-    alwaysTryAllPlayers?: boolean;
-    maxLevel?: number;
 }
-  
-const getLevel = async (options: GetLevelOptions) => {
-    console.log(`GetLevel Started ${options.startLevel}`);
+
+const checkLevel = async (options: CheckLevelOptions) => {
+    const mistakes = [] as GameHistory[];
+    if (options.level === 1) {
+        return mistakes;
+    }
     const alphaOptions = {
         gameRules: options.gameRules,
         planCount: options.planCount,
         model: options.model
     };
+    for (let i = 1; i <= levelGamesCount; i++) {
+        const pureMctsOptions = {
+            gameRules: options.gameRules,
+            planCount: Math.pow(2, options.level - 2),
+            randomize: i !== 1
+        };
+        const agents = [
+            new Mcts(pureMctsOptions),
+            new Mcts(pureMctsOptions)
+        ] as PolicyAgent[];
+        agents[options.playerIndex] = new Alpha(alphaOptions);
+        const { rewards, history } = await play(
+            options.gameRules,
+            agents,
+            `${options.level}.${i}`
+        );
+        if (rewards[options.playerIndex] < 0) {
+            mistakes.push({ rewards, history });
+        }
+    }
+    return mistakes;
+};
+
+interface GetLevelOptions {
+    model: GameModel;
+    gameRules: GameRules;
+    startLevel: number[];
+    planCount?: number;
+    maxLevel?: number;
+}
+  
+const getLevel = async (options: GetLevelOptions) => {
+    console.log(`GetLevel Started ${options.startLevel}`);
     const startLevel = options.startLevel;
     const maxLevel = options.maxLevel || 15;
     let player1Level = startLevel[0];
     let player2Level = startLevel[1];
-    const alwaysTryAllPlayers = options.alwaysTryAllPlayers || false;
-    
-    for (let level = player1Level; true; level++) {
-        if (level === 1) {
-            continue;
-        }
+    let mistakes = [] as GameHistory[];
+
+    const startPlayer1LevelMistakes = await checkLevel({
+        gameRules: options.gameRules,
+        level: player1Level,
+        model: options.model,
+        playerIndex: 0,
+        planCount: options.planCount
+    });
+    if (startPlayer1LevelMistakes.length) {
+        player1Level -= 1;
+    }
+
+    const startPlayer2LevelMistakes = await checkLevel({
+        gameRules: options.gameRules,
+        level: player2Level,
+        model: options.model,
+        playerIndex: 1,
+        planCount: options.planCount
+    });
+    if (startPlayer2LevelMistakes.length) {
+        player2Level -= 1;
+    }
+
+    mistakes = mistakes.concat(
+        startPlayer1LevelMistakes,
+        startPlayer2LevelMistakes
+    );
+
+    if (mistakes.length) {
+        return {
+            level: [ player1Level, player2Level ],
+            mistakes
+        };
+    } else {
+        console.log('Successfully beaten previos level!');
+    }
+
+    for (let level = player1Level + 1; true; level++) {
         if ( level > maxLevel ) {
             break;
         }
-        let score = 0;
-        for (let i = 1; i <= levelGamesCount; i++) {
-            const pureMctsOptions = {
-                gameRules: options.gameRules,
-                planCount: Math.pow(2, level - 2),
-                randomize: i !== 1
-            };
-            const player1 = new Alpha(alphaOptions);
-            const player2 = new Mcts(pureMctsOptions);
-            const agents = [player1, player2];
-            const { rewards } = await play(
-                options.gameRules,
-                agents,
-                `${level}.${i}`
+        
+        const player1LevelMistakes = await checkLevel({
+            gameRules: options.gameRules,
+            level,
+            model: options.model,
+            playerIndex: 0,
+            planCount: options.planCount
+        });
+
+        if (player1LevelMistakes.length) {
+            mistakes = mistakes.concat(
+                player1LevelMistakes
             );
-            if (rewards[0] < 0) {
-                break;
-            } else {
-                score += 1;
-            }
-        }
-        if (score < levelGamesCount) {
-            if (level === startLevel[0]) {
-                player1Level -= 1;
-            }
             break;
         } else {
             console.log(`new player1 level: ${level}!`);
             player1Level = level;
         }
     }
-    if (player1Level < startLevel[0] && !alwaysTryAllPlayers) {
-        return [ player1Level, player2Level ];
-    }
-    console.log(`Current player2 level: ${player2Level}`);
-    for (let level = player2Level; true; level++) {
-        if (level === 1) {
-            continue;
-        }
+
+    for (let level = player2Level + 1; true; level++) {
         if ( level > maxLevel ) {
             break;
         }
-        let score = 0;
-        for (let i = 1; i <= levelGamesCount; i++) {
-            const pureMctsOptions = {
-                gameRules: options.gameRules,
-                planCount: Math.pow(2, level - 2),
-                randomize: i !== 1
-            };
-            const player1 = new Mcts(pureMctsOptions);
-            const player2 = new Alpha(alphaOptions);
-            const agents = [player1, player2];
-            const { rewards } = await play(
-                options.gameRules,
-                agents,
-                `${level}.${i}`
+        
+        const player2LevelMistakes = await checkLevel({
+            gameRules: options.gameRules,
+            level,
+            model: options.model,
+            playerIndex: 1,
+            planCount: options.planCount
+        });
+
+        if (player2LevelMistakes.length) {
+            mistakes = mistakes.concat(
+                player2LevelMistakes
             );
-            if (rewards[1] < 0) {
-                break;
-            } else {
-                score += 1;
-            }
-        }
-        if (score < levelGamesCount) {
-            if (level === startLevel[1]) {
-                player2Level -= 1;
-            }
             break;
         } else {
             console.log(`new player2 level: ${level}!`);
             player2Level = level;
         }
     }
-    console.log(`GetLevel Finished ${[ player1Level, player2Level ]}`);
-    return [ player1Level, player2Level ];
+    
+    console.log(`GetLevel Finished ${[
+        player1Level,
+        player2Level
+    ]} ${mistakes.length} mistakes`);
+    return {
+        level: [ player1Level, player2Level ],
+        mistakes
+    };
 };
 
 export {
