@@ -88,7 +88,7 @@ const trainGeneration = async (
         }
     }
 
-    const modelHistories = [] as GameHistory[];
+    let modelHistories = [] as GameHistory[];
     const histories = await getHistories(game.name);
     if (histories.includes(modelName)) {
         const savedhistories = await loadHistory(
@@ -98,7 +98,6 @@ const trainGeneration = async (
         for (let gameHistory of savedhistories) {
             modelHistories.push(gameHistory);
         }
-        console.log(modelHistories);
     } else {
         const gameHistories = await playAlpha({
             gameRules: rules,
@@ -115,6 +114,20 @@ const trainGeneration = async (
         console.log(modelHistories);
         await saveHistory(game.name, modelName, modelHistories);
     }
+    if (useLevels) {
+        const mistakesName = `${modelName}-mistakes`;
+        if (histories.includes(mistakesName)) {
+            const mistakes = await loadHistory(
+                game.name,
+                modelName
+            );
+            modelHistories = mistakes.concat(
+                modelHistories.slice(mistakes.length * 2),
+                mistakes
+            );
+        }
+    }
+    console.log(modelHistories);
     await model.train(modelHistories, {improve});
 
     const gamesCount = 25;
