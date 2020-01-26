@@ -119,11 +119,11 @@ const trainGeneration = async (
         if (histories.includes(mistakesName)) {
             const mistakes = await loadHistory(
                 game.name,
-                modelName
+                mistakesName
             );
+            console.log('Mistakes', mistakes.length);
             modelHistories = mistakes.concat(
-                modelHistories.slice(mistakes.length * 2),
-                mistakes
+                modelHistories.slice(mistakes.length)
             );
         }
     }
@@ -180,15 +180,27 @@ const trainGeneration = async (
             console.log(`previous level: ${previousModelLevel}`);
             console.log(`current level: ${level}`);
         
-            if (level[0] < previousModelLevel[0] || 
-                level[1] < previousModelLevel[1]
+            if (level[0] < previousModelLevel[0] ||
+                level[1] < previousModelLevel[1] ||
+                level[0] + level[1] <= (
+                    previousModelLevel[0] + previousModelLevel[1]
+                )
             ) {
                 console.log('Failed to beat previous level');
                 if (mistakes.length) {
+                    let allMistakes = mistakes.slice();
+                    const mistakesName = `${modelName}-mistakes`;
+                    if (histories.includes(mistakesName)) {
+                        const previousMistakes = await loadHistory(
+                            game.name,
+                            mistakesName
+                        );
+                        allMistakes = allMistakes.concat(previousMistakes);
+                    }
                     await saveHistory(
                         game.name,
                         `${modelName}-mistakes`,
-                        mistakes
+                        allMistakes
                     );
                 }
                 return false;
@@ -226,7 +238,7 @@ const trainAlpha = async (game: Game) => {
         Math.max(...generations) + 1 : 1;
     for (let i = lastGeneration; true; i++) {
         let tries = 1;
-        const maxTries = 20;
+        const maxTries = 30;
         while (tries <= maxTries) {
             console.log(`train ${i}:${tries}`);
             const improve = tries > maxTries / 2;

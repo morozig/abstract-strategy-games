@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 
 const numFilters = 64;
 const defaultNumLayers = 4;
-const numEpochs = 10;
+const numEpochs = 15;
 const dropout = 0.3;
 
 interface Options {

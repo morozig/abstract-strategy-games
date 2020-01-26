@@ -205,7 +205,7 @@ const getLevel = async (options: GetLevelOptions) => {
             mistakes
         };
     } else {
-        console.log('Successfully beaten previos level!');
+        console.log('Successfully proved previos level!');
     }
 
     for (let level = player1Level + 1; true; level++) {
