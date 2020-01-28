@@ -1,8 +1,8 @@
 import * as tf from '@tensorflow/tfjs';
 
-const numFilters = 64;
+const numFilters = 128;
 const defaultNumLayers = 4;
-const numEpochs = 15;
+const numEpochs = 10;
 const dropout = 0.3;
 
 interface Options {
@@ -29,7 +29,7 @@ export default class Network {
         });
 
         let network = tf.layers.conv2d({
-            kernelSize: 2,
+            kernelSize: 3,
             filters: numFilters,
             strides: 1,
             padding: 'same',
@@ -43,7 +43,7 @@ export default class Network {
         }).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.conv2d({
-            kernelSize: 2,
+            kernelSize: 3,
             filters: numFilters,
             strides: 1,
             padding: 'same',
@@ -57,7 +57,7 @@ export default class Network {
         }).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.conv2d({
-            kernelSize: 2,
+            kernelSize: 3,
             filters: numFilters,
             strides: 1,
             padding: 'valid',
@@ -71,7 +71,7 @@ export default class Network {
         }).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.conv2d({
-            kernelSize: 2,
+            kernelSize: 3,
             filters: numFilters,
             strides: 1,
             padding: 'valid',

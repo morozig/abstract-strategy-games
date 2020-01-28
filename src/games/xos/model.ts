@@ -23,7 +23,7 @@ interface Pair {
     output: Output;
 };
 
-const historyDepth = 1;
+const historyDepth = 2;
 const useColor = true;
 
 const getHash = (state: State) => {
