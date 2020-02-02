@@ -71,7 +71,7 @@ export default class Network {
         }).apply(network) as tf.SymbolicTensor;
 
         network = tf.layers.conv2d({
-            kernelSize: 3,
+            kernelSize: 2,
             filters: numFilters,
             strides: 1,
             padding: 'valid',
