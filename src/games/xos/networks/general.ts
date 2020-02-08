@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 
 const numFilters = 128;
 const defaultNumLayers = 4;
-const numEpochs = 10;
+const numEpochs = 15;
 const dropout = 0.3;
 
 interface Options {
@@ -173,7 +173,7 @@ export default class Network {
             xsTensor,
             ysTensors,
             {
-                batchSize: 128,
+                batchSize: 256,
                 epochs: numEpochs,
                 shuffle: true,
                 validationSplit: 0.01,

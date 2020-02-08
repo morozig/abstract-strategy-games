@@ -20,8 +20,8 @@ import {
 
 const planCount = 50;
 const maxLevel = 15;
-const useLevels = false;
-const winRate = 0.6;
+const useLevels = true;
+const winRate = 0.55;
 
 const trainGeneration = async (
     game: Game,
