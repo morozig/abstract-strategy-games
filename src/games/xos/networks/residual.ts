@@ -3,11 +3,12 @@ import {
     residualNetwork2D,
     countResidualLayers,
     copyWeights,
-    denseLayer
+    denseLayer,
+    convLayer2D
 } from '../../../lib/networks';
 
-// const numFilters = 8;
-const defaultNumLayers = 1;
+const numFilters = 16;
+const defaultNumLayers =2;
 const numEpochs = 10;
 const dropout = 0.3;
 
@@ -34,12 +35,19 @@ export default class Network {
             shape: [this.height, this.width, this.depth]
         });
 
-        const numFilters = this.height * this.width;
+        // const numFilters = this.height * this.width;
 
         let network = residualNetwork2D(input, {
             numLayers,
             numFilters,
-            kernelSize: 2
+            kernelSize: 3
+        });
+
+        network = convLayer2D(network, {
+            name: 'reduce1',
+            numFilters,
+            kernelSize: 3,
+            padding: 'valid'
         });
 
         network = tf.layers.flatten(
@@ -47,12 +55,12 @@ export default class Network {
 
         network = denseLayer(network, {
             name: 'dense1',
-            units: numFilters * 2,
+            units: 256,
             dropout
         });
         network = denseLayer(network, {
             name: 'dense2',
-            units: numFilters,
+            units: 128,
             dropout
         });
 

@@ -7,15 +7,17 @@ const convLayer2D = (
         kernelSize?: number;
         name: string;
         noActivation?: boolean;
+        padding?: 'same' | 'valid'
     }
 ) => {
     const kernelSize = options.kernelSize || 3;
+    const padding = options.padding || 'same';
     const useActivation = !options.noActivation;
     let network = tf.layers.conv2d({
         kernelSize,
         filters: options.numFilters,
         strides: 1,
-        padding: 'same',
+        padding,
         name: options.name,
         useBias: false
     }).apply(input) as tf.SymbolicTensor;
