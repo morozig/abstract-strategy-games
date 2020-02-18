@@ -4,7 +4,7 @@ import PolicyAgent from '../interfaces/policy-agent';
 import PolicyAction from '../interfaces/policy-action';
 import GameModel from '../interfaces/game-model';
 import Alpha from '../agents/alpha';
-import { durationHR } from './helpers';
+import { durationHR, softMax } from './helpers';
 import Mcts from '../agents/mcts';
 
 const levelGamesCount = 5;
@@ -266,8 +266,52 @@ const getLevel = async (options: GetLevelOptions) => {
     };
 };
 
+const fixGameHistory = (
+    gameRules: GameRules,
+    gameHistory: GameHistory
+) => {
+    const rewards = gameHistory.rewards.slice();
+    const history = gameHistory.history.slice();
+    const loserIndex = rewards.indexOf(-1);
+    if (loserIndex === -1) {
+        return {
+            rewards,
+            history
+        } as GameHistory;
+    }
+    const fixedHistory = [] as PolicyAction[];
+
+    let gameState = gameRules.init();
+
+    for (let policyAction of history) {
+        const availables = gameRules.availables(gameState);
+        const fixedPolicy = gameState.playerIndex === loserIndex ?
+            softMax(policyAction.policy, 1)
+                .map(
+                    (prob, index) =>
+                        availables.includes(index + 1) ?
+                            prob : 0
+                )
+                : policyAction.policy.slice();
+        fixedHistory.push({
+            action: policyAction.action,
+            policy: fixedPolicy
+        });
+        const gameStepResult = gameRules.step(
+            gameState, policyAction.action
+        );
+        gameState = gameStepResult.state;
+    }
+
+    return {
+        rewards,
+        history: fixedHistory
+    } as GameHistory;
+};
+
 export {
     play,
     playAlpha,
-    getLevel
+    getLevel,
+    fixGameHistory
 };

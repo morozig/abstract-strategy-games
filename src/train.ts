@@ -1,6 +1,7 @@
 import {
     playAlpha,
-    getLevel
+    getLevel,
+    fixGameHistory
 } from './lib/play';
 import Game from '../src/interfaces/game';
 
@@ -17,39 +18,12 @@ import {
     saveResult,
     getResults
 } from './lib/api';
-import { softMax } from './lib/helpers';
-import PolicyAction from './interfaces/policy-action';
 
 const planCount = 50;
 const maxLevel = 15;
 const useLevels = true;
 const winRate = 0.55;
 const fixLoserPolicy = true;
-
-const fixGameHistory = (gameHistory: GameHistory) => {
-    const rewards = gameHistory.rewards.slice();
-    const history = gameHistory.history.slice();
-    const loserIndex = rewards.indexOf(-1);
-    if (loserIndex === -1) {
-        return {
-            rewards,
-            history
-        } as GameHistory;
-    }
-    const fixedHistory = history.map(({ policy, action }, index) => {
-        const fixedPolicy = index % 2 === loserIndex ?
-            softMax(policy, 1) : policy.slice();
-        return {
-            action,
-            policy: fixedPolicy
-        } as PolicyAction;
-    });
-
-    return {
-        rewards,
-        history: fixedHistory
-    } as GameHistory;
-};
 
 const trainGeneration = async (
     game: Game,
@@ -156,7 +130,9 @@ const trainGeneration = async (
         }
     }
     if (fixLoserPolicy) {
-        modelHistories = modelHistories.map(fixGameHistory);
+        modelHistories = modelHistories.map(
+            gameHistory => fixGameHistory(rules, gameHistory)
+        );
     }
     console.log(modelHistories);
     await model.train(modelHistories, {improve});
