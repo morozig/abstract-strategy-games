@@ -124,45 +124,4 @@ app.post('/api/:game/model/:model', async (req, res) => {
     }
 });
 
-app.get('/api/:game/result', (req, res) => {
-    const game = req.params.game;
-    const gameDir = path.resolve(dataDir, game);
-    if (!fs.existsSync(gameDir)) {
-        return res.json([]);
-    }
-    const results = [];
-    const resultsDir = path.resolve(gameDir, 'result');
-    if (!fs.existsSync(resultsDir)) {
-        return res.json([]);
-    }
-    for (let resultJson of fs.readdirSync(resultsDir)) {
-        results.push(path.basename(resultJson, '.json'));
-    }
-    return res.json(results);
-});
-
-app.post('/api/:game/result', (req, res) => {
-    if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).send('No files were uploaded.');
-    }
-    const game = req.params.game;
-    const gameDir = path.resolve(dataDir, game);
-    if (!fs.existsSync(gameDir)) {
-        fs.mkdirSync(gameDir);
-    }
-    const resultDir = path.resolve(gameDir, 'result');
-    if (!fs.existsSync(resultDir)) {
-        fs.mkdirSync(resultDir);
-    }
-
-    const fileName = Object.keys(req.files)[0];
-    const file = req.files[fileName];
-    const filePath = path.resolve(resultDir, fileName);
-    file.mv(filePath, (err) => {
-        if (err) return res.status(500).send(err);
-        res.send('File uploaded!');
-    });
-});
-
-
 app.listen(3001);
