@@ -15,6 +15,7 @@ interface MctsOptions {
     predict?: Predictor;
     planCount?: number;
     randomize?: boolean;
+    randomTurnsCount?: number;
 }
 
 const defaultPredictor = (gameRules: GameRules) => {
@@ -132,6 +133,7 @@ export default class Mcts implements PolicyAgent{
     private predict: Predictor;
     private planCount: number;
     private randomize: boolean;
+    private randomTurnsCount: number;
     private root: Node;
     private rootHistory: number[];
     constructor(options: MctsOptions) {
@@ -141,6 +143,9 @@ export default class Mcts implements PolicyAgent{
         this.planCount = options.planCount ?
             options.planCount : 100;
         this.randomize = !!options.randomize;
+        this.randomTurnsCount = options.randomTurnsCount === undefined ?
+            Math.floor(this.gameRules.actionsCount / 2) :
+            options.randomTurnsCount;
         this.root = new Node({
             parent: null,
             action: 0,
@@ -166,7 +171,10 @@ export default class Mcts implements PolicyAgent{
         const probs = this.root.children.map(
             child => child.visits / this.root.visits
         );
-        const temp = this.randomize ? 2 / (this.rootHistory.length + 1) : 0;
+        const temp = (
+            this.randomize &&
+            this.rootHistory.length < this.randomTurnsCount
+        ) ? 1 : 0;
         const index = indexSoftMax(probs, temp);
         const action = this.root.children[index].action;
         for (let i = 0; i < this.root.children.length; i++) {

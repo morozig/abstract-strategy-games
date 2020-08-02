@@ -17,7 +17,7 @@ export default class Xos implements Game {
         {type: GamePlayerType.Random},
         {
             type: GamePlayerType.Mcts,
-            planCount: 50
+            planCount: 5000
         },
         {
             type: GamePlayerType.Alpha,
@@ -25,6 +25,7 @@ export default class Xos implements Game {
             modelName: 'alpha-12'
         },
     ] as GamePlayer[];
+    readonly randomTurnsCount = 12;
     constructor(height: number, width: number, same: number) {
         this.height = height;
         this.width = width;

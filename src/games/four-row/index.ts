@@ -21,6 +21,7 @@ export default class FourRow implements Game {
             modelName: 'alpha-4'
         },
     ] as GamePlayer[];
+    readonly randomTurnsCount = 21;
     createModel(parallel = false) {
         return new Model(this.name, this.rules, parallel);
     }

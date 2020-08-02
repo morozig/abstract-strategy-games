@@ -19,7 +19,10 @@ import { GamePlayerType } from './interfaces/game-player';
 const winRate = 0.6;
 
 const trainMcts = async (game: Game) => {
-    const modelName = 'mcts-500';
+    const planCount = game.players.find(
+        player => player.type === GamePlayerType.Mcts
+    )?.planCount || game.rules.actionsCount; 
+    const modelName = `mcts-${planCount}`;
     const models = await getModels(game.name);
     console.log(game.name, models);
     if (models.includes(modelName)) {
@@ -39,13 +42,12 @@ const trainMcts = async (game: Game) => {
         console.log(modelHistories);
     } else {
         const rules = game.rules;
-        const planCount = game.players.find(
-            player => player.type === GamePlayerType.Mcts
-        )?.planCount || game.rules.actionsCount; 
 
         const pureMctsOptions = {
             gameRules: rules,
-            planCount
+            planCount,
+            randomize: true,
+            randomTurnsCount: game.randomTurnsCount
         };
         const player1 = new Mcts(pureMctsOptions);
         const player2 = new Mcts(pureMctsOptions);
