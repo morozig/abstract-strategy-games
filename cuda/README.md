@@ -30,7 +30,7 @@ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.li
 
 sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
-docker run --gpus all nvidia/cuda:10.0-base nvidia-smi
+docker run --gpus all nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 nvidia-smi
 
 docker run --gpus all -ti --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 bash
 
