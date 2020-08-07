@@ -235,8 +235,7 @@ export default class Model implements GameModel {
         return loss < 0.5;
     }
     async save(name: string){
-        const location = 
-        const url = `${location}api/${this.gameName}/model/${name}`;
+        const url = `${config.dataUrl}/${this.gameName}/model/${name}`;
         await this.network.save(url);
     }
     async load(name: string){
