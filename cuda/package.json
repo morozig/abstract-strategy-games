@@ -1,0 +1,15 @@
+{
+  "name": "cuda",
+  "version": "1.0.0",
+  "description": "cuda",
+  "main": "example.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^2.1.0",
+    "replace-in-file": "^6.1.0"
+  }
+}
