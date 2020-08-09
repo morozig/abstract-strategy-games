@@ -7,7 +7,12 @@ const config = {
     dataUrl: prod ?
         'https://storage.googleapis.com/abstract-strategy-games-data' :
         isNode ?
-            `${url.pathToFileURL(process.cwd())}/data` :
+            `${
+                url.pathToFileURL(process.cwd())
+                    .href
+                    .replace('///', '//')
+                    // https://stackoverflow.com/questions/57859770
+            }/data` :
             `${window.location}data`
 };
 

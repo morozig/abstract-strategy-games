@@ -1,37 +1,44 @@
 import GameHistory from '../interfaces/game-history';
 import path from 'path';
-import fs from 'fs/promises';
+import fs from 'fs';
 
-const dataDir = path.resolve(process.cwd(), '../data');
+const dataDir = path.resolve(process.cwd(), 'data');
+
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+}
 
 const getHistories = async (gameName: string) => {
     const histories = [] as string[];
     const gameDir = path.resolve(dataDir, gameName);
-    const historyDir = path.resolve(gameDir, 'history');
-
-    try {
-        for (let historyJson of await fs.readdir(historyDir)) {
-            histories.push(path.basename(historyJson, '.json'));
-        }
-    }
-    finally {
+    if (!fs.existsSync(gameDir)) {
         return histories;
     }
+    const historyDir = path.resolve(gameDir, 'history');
+    if (!fs.existsSync(historyDir)) {
+        return histories;
+    }
+
+    for (let historyJson of fs.readdirSync(historyDir)) {
+        histories.push(path.basename(historyJson, '.json'));
+    }
+    return histories;
 };
 
 const getModels = async (gameName: string) => {
     const models = [] as string[];
     const gameDir = path.resolve(dataDir, gameName);
-    const modelsDir = path.resolve(gameDir, 'model');
-
-    try {
-        for (let modelDir of await fs.readdir(modelsDir)) {
-            models.push(modelDir);
-        }
-    }
-    finally {
+    if (!fs.existsSync(gameDir)) {
         return models;
     }
+    const modelsDir = path.resolve(gameDir, 'model');
+    if (!fs.existsSync(modelsDir)) {
+        return models;
+    }
+    for (let modelDir of fs.readdirSync(modelsDir)) {
+        models.push(modelDir);
+    }
+    return models;
 };
 
 const loadHistory = async(gameName: string, historyName: string) => {
@@ -42,7 +49,9 @@ const loadHistory = async(gameName: string, historyName: string) => {
         `${historyName}.json`
     );
 
-    const rawData = await fs.readFile(filePath, 'utf8');
+    const rawData = await fs.readFileSync(
+        filePath, 'utf8'
+    );
     const gameHistories = JSON.parse(
         rawData
     ) as GameHistory[];
@@ -55,9 +64,23 @@ const saveHistory = async(
         gameHistories: GameHistory[]
     ) => {
     const gameDir = path.resolve(dataDir, gameName);
+    if (!fs.existsSync(gameDir)) {
+        fs.mkdirSync(gameDir);
+    }
     const historyDir = path.resolve(gameDir, 'history');
-    const filePath = path.resolve(historyDir, historyName);
-    await fs.writeFile(
+    if (!fs.existsSync(historyDir)) {
+        fs.mkdirSync(historyDir);
+    }
+    const modelsDir = path.resolve(gameDir, 'model');
+    if (!fs.existsSync(modelsDir)) {
+        fs.mkdirSync(modelsDir);
+    }
+
+    const filePath = path.resolve(
+        historyDir,
+        `${historyName}.json`
+    );
+    fs.writeFileSync(
         filePath,
         JSON.stringify(gameHistories),
         'utf8'

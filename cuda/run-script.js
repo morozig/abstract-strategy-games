@@ -1,13 +1,64 @@
-const { execSync: cmd } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
+
+process.on('unhandledRejection', err => {
+    throw err;
+});
 
 const rootDir = process.cwd();
 const cudaDir = path.resolve(rootDir, 'cuda');
 
-cmd(`npm i`, {
-    cwd: cudaDir
+spawnSync('npm', ['i'], {
+    cwd: cudaDir,
+    shell: process.platform == 'win32',
+    stdio: 'inherit'
 });
-cmd(`npx tsc -p ${
-    path.resolve(cudaDir, 'tsconfig.json')
-}`);
 
+console.log('compiling typescript files');
+spawnSync('npx', ['tsc', '-p', 'cuda/tsconfig.json'], {
+    cwd: rootDir,
+    shell: process.platform == 'win32',
+    stdio: 'inherit'
+});
+
+console.log('substituting imports for node');
+try {
+    const replace = require('replace-in-file');
+    const tfjs = replace.sync({
+        files: `${cudaDir}/build/**/*.js`,
+        from: '@tensorflow/tfjs',
+        to: '@tensorflow/tfjs-node'
+    });
+    console.log('@tensorflow/tfjs -> @tensorflow/tfjs-node', tfjs
+        .filter(result => result.hasChanged)
+        .map(result => result.file)
+    );
+    const api = replace.sync({
+        files: `${cudaDir}/build/**/*.js`,
+        from: '/lib/api',
+        to: '/lib/api-node'
+    });
+    console.log('/lib/api -> /lib/api-node', api
+        .filter(result => result.hasChanged)
+        .map(result => result.file)
+    );
+    const css = replace.sync({
+        files: `${cudaDir}/build/**/*.js`,
+        from: /require.+css.*/,
+        to: '//$&'
+    });
+    console.log('require(*.css); -> //require(*.css);', css
+        .filter(result => result.hasChanged)
+        .map(result => result.file)
+    );
+}
+catch (error) {
+    console.error('Error occurred:', error);
+}
+
+console.log('starting training');
+spawnSync('node', ['cuda/build/cuda/index.js'], {
+    cwd: rootDir,
+    shell: process.platform == 'win32',
+    stdio: 'inherit'
+});

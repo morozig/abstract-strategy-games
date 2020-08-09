@@ -22,10 +22,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "cuda-install": "cd cuda && npm i",
-    "cuda-build": "tsc -p cuda/tsconfig.json",
-    "cuda-replace-api": "replace-in-file .\/lib\/api .\/lib\/api-node cuda/build/src/train.js",
-    "cuda": "npm run cuda-install && npm run cuda-build && npm run cuda-replace-api"
+    "cuda": "node cuda/run-script.js"
   },
   "eslintConfig": {
     "extends": "react-app"

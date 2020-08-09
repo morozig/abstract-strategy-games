@@ -9,7 +9,7 @@ import {
 
 const numFilters = 16;
 const defaultNumLayers =2;
-const numEpochs = 10;
+const numEpochs = 1;
 const dropout = 0.3;
 
 interface Options {
