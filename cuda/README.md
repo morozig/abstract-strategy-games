@@ -4,6 +4,7 @@ usermod -aG sudo igor
 su - igor
 sudo ls -la /root
 
+sudo apt-get update
 sudo apt-get install ubuntu-drivers-common
 sudo ubuntu-drivers devices
 sudo apt-get install nvidia-driver-440
