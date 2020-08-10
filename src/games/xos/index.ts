@@ -17,7 +17,7 @@ export default class Xos implements Game {
         {type: GamePlayerType.Random},
         {
             type: GamePlayerType.Mcts,
-            planCount: 50
+            planCount: 5000
         },
         {
             type: GamePlayerType.Alpha,
