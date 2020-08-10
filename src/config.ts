@@ -10,8 +10,12 @@ const config = {
             `${
                 url.pathToFileURL(process.cwd())
                     .href
-                    .replace('///', '//')
-                    // https://stackoverflow.com/questions/57859770
+                    .replace('///', 
+                        process.platform == 'win32' ?
+                        '//' : 
+                        '///'
+                    ) // https://stackoverflow.com/questions/57859770
+
             }/data` :
             `${window.location}data`
 };

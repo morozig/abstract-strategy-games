@@ -9,6 +9,12 @@ const rootDir = process.cwd();
 const cudaDir = path.resolve(rootDir, 'cuda');
 
 spawnSync('npm', ['i'], {
+    cwd: rootDir,
+    shell: process.platform == 'win32',
+    stdio: 'inherit'
+});
+
+spawnSync('npm', ['i'], {
     cwd: cudaDir,
     shell: process.platform == 'win32',
     stdio: 'inherit'
@@ -27,9 +33,9 @@ try {
     const tfjs = replace.sync({
         files: `${cudaDir}/build/**/*.js`,
         from: '@tensorflow/tfjs',
-        to: '@tensorflow/tfjs-node'
+        to: '@tensorflow/tfjs-node-gpu'
     });
-    console.log('@tensorflow/tfjs -> @tensorflow/tfjs-node', tfjs
+    console.log('@tensorflow/tfjs -> @tensorflow/tfjs-node-gpu', tfjs
         .filter(result => result.hasChanged)
         .map(result => result.file)
     );

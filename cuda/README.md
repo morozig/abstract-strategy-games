@@ -1,3 +1,4 @@
+```bash
 adduser igor
 usermod -aG sudo igor
 su - igor
@@ -32,17 +33,25 @@ sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 docker run --gpus all nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 nvidia-smi
 
-docker run --gpus all -ti --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 bash
+docker run --gpus all -ti --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 sh
+```
 
-cd ~
-apt-get update
-apt-get install curl nano
-curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh
-bash nodesource_setup.sh
-apt install nodejs
-nodejs -v
-npm -v
-apt install build-essential
-npm install @tensorflow/tfjs-node-gpu
+```bash
+docker build -t tfjs-node-gpu .
+
+```
+
+```bash
+docker run --gpus all \
+--rm \
+-it \
+-v $(pwd):/app \
+-w=/app \
+tfjs-node-gpu \
+npm i && npm run cuda
+
+```
+
+
 
 
