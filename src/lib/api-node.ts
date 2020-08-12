@@ -1,6 +1,8 @@
 import GameHistory from '../interfaces/game-history';
 import path from 'path';
 import fs from 'fs';
+import * as tf from '@tensorflow/tfjs';
+import url from 'url';
 
 const dataDir = path.resolve(process.cwd(), 'data');
 
@@ -59,10 +61,10 @@ const loadHistory = async(gameName: string, historyName: string) => {
 };
 
 const saveHistory = async(
-        gameName: string,
-        historyName: string,
-        gameHistories: GameHistory[]
-    ) => {
+    gameName: string,
+    historyName: string,
+    gameHistories: GameHistory[]
+) => {
     const gameDir = path.resolve(dataDir, gameName);
     if (!fs.existsSync(gameDir)) {
         fs.mkdirSync(gameDir);
@@ -70,10 +72,6 @@ const saveHistory = async(
     const historyDir = path.resolve(gameDir, 'history');
     if (!fs.existsSync(historyDir)) {
         fs.mkdirSync(historyDir);
-    }
-    const modelsDir = path.resolve(gameDir, 'model');
-    if (!fs.existsSync(modelsDir)) {
-        fs.mkdirSync(modelsDir);
     }
 
     const filePath = path.resolve(
@@ -87,9 +85,50 @@ const saveHistory = async(
     );
 };
 
+const loadModel = async(gameName: string, modelName: string) => {
+    const gameDir = path.resolve(dataDir, gameName);
+    const modelsDir = path.resolve(gameDir, 'model');
+    const modelDir = path.resolve(modelsDir, modelName);
+    const modelPath = path.resolve(modelDir, 'model.json');
+    const requestUrl = url.pathToFileURL(modelPath).href.replace(
+        '///', 
+        process.platform === 'win32' ? '//' : '///'
+    ); // https://stackoverflow.com/questions/57859770
+
+    const model = await tf.loadLayersModel(requestUrl);
+    return model;
+};
+
+const saveModel = async(
+    model: tf.LayersModel,
+    gameName: string,
+    modelName: string
+) => {
+    const gameDir = path.resolve(dataDir, gameName);
+    if (!fs.existsSync(gameDir)) {
+        fs.mkdirSync(gameDir);
+    }
+    const modelsDir = path.resolve(gameDir, 'model');
+    if (!fs.existsSync(modelsDir)) {
+        fs.mkdirSync(modelsDir);
+    }
+    const modelDir = path.resolve(modelsDir, modelName);
+    if (!fs.existsSync(modelDir)) {
+        fs.mkdirSync(modelDir);
+    }
+
+    const requestUrl = url.pathToFileURL(modelDir).href.replace(
+        '///', 
+        process.platform === 'win32' ? '//' : '///'
+    ); // https://stackoverflow.com/questions/57859770
+    await model.save(requestUrl);
+};
+
 export {
     getHistories,
     getModels,
     saveHistory,
-    loadHistory
+    loadHistory,
+    saveModel,
+    loadModel
 }

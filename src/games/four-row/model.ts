@@ -185,13 +185,10 @@ export default class Model implements GameModel {
         return loss < 0.5;
     }
     async save(name: string){
-        const url = `${config.dataUrl}/${this.gameName}/model/${name}`;
-        await this.network.save(url);
+        await this.network.save(this.gameName, name);
     }
     async load(name: string){
-        const url = `${config.dataUrl}/${this.gameName}/model/` +
-            `${name}/model.json`;
-        await this.network.load(url);
+        await this.network.load(this.gameName, name);
     }
     async predict(history: number[]) {
         const states = getStates(history, this.rules);

@@ -6,6 +6,10 @@ import {
     denseLayer,
     convLayer2D
 } from '../../../lib/networks';
+import {
+    saveModel,
+    loadModel
+} from '../../../lib/api';
 
 const numFilters = 16;
 const defaultNumLayers =2;
@@ -158,12 +162,16 @@ export default class Network {
         );
         return outputs;
     }
-    async save(url: string) {
-        await this.model.save(url);
+    async save(gameName: string, modelName: string) {
+        await saveModel(
+            this.model,
+            gameName,
+            modelName
+        );
     }
-    async load(url: string) {
+    async load(gameName: string, modelName: string) {
         this.model.dispose();
-        this.model = await tf.loadLayersModel(url);
+        this.model = await loadModel(gameName, modelName);
         this.compile();
     }
     addLayer() {

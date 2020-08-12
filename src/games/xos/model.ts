@@ -10,7 +10,6 @@ import Rules from './rules';
 // import Network from './networks/conv-only';
 import Network from './networks/residual';
 import Batcher from '../../lib/batcher';
-import config from '../../config';
 import PolicyAction from '../../interfaces/policy-action';
 // import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
@@ -235,13 +234,10 @@ export default class Model implements GameModel {
         return loss < 0.5;
     }
     async save(name: string){
-        const url = `${config.dataUrl}/${this.gameName}/model/${name}`;
-        await this.network.save(url);
+        await this.network.save(this.gameName, name);
     }
     async load(name: string){
-        const url = `${config.dataUrl}/${this.gameName}/model/` +
-            `${name}/model.json`;
-        await this.network.load(url);
+        await this.network.load(this.gameName, name);
     }
     async predict(history: number[]) {
         const states = getStates(history, this.rules);

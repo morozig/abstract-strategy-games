@@ -1,4 +1,6 @@
 import GameHistory from '../interfaces/game-history';
+import * as tf from '@tensorflow/tfjs';
+import config from '../config';
 
 const getHistories = async (gameName: string) => {
     const requestUrl = `/api/${gameName}/history`;
@@ -46,9 +48,30 @@ const saveHistory = async(
     );
 };
 
+const loadModel = async(gameName: string, modelName: string) => {
+    const requestUrl = `${
+        config.dataUrl
+    }/${gameName}/model/${modelName}/model.json`;
+    const model = await tf.loadLayersModel(requestUrl);
+    return model;
+};
+
+const saveModel = async(
+    model: tf.LayersModel,
+    gameName: string,
+    modelName: string
+) => {
+    const requestUrl = `${
+        window.location
+    }api/${gameName}/model/${modelName}`;
+    await model.save(requestUrl);
+};
+
 export {
     getHistories,
     getModels,
     saveHistory,
-    loadHistory
+    loadHistory,
+    saveModel,
+    loadModel
 }
