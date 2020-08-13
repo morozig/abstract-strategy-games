@@ -1,15 +1,20 @@
-// import React from 'react';
-// import ReactDOM from 'react-dom';
-// import './index.css';
-// import App from './components/app';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './components/app';
 import * as serviceWorker from './serviceWorker';
-
-
 import run from './train';
-run();
 
-// ReactDOM.render(<App />, document.getElementById('root'));
-
+switch (process.env.REACT_APP_RUN) {
+    case 'train': {
+        run();
+        break;
+    }
+    case 'play': {
+        ReactDOM.render(<App />, document.getElementById('root'));
+        break;
+    }
+}
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
