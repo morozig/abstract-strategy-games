@@ -4,7 +4,7 @@ import { randomOf, indexMax, indexSoftMax } from '../lib/helpers';
 import StepResult from '../interfaces/game-step-result';
 import PolicyAgent from '../interfaces/policy-agent';
 
-const bonusScale = 1;
+const bonusScale = 5;
 // const randomizeTemp = 0.1;
 const printPolicy = false;
 
@@ -182,6 +182,9 @@ export default class Mcts implements PolicyAgent{
             const prob = probs[i];
             policy[action - 1] = prob;
         }
+        console.log(this.root.children.map(
+            child => child.visits
+        ), action);
         this.step(action);
         return { action, policy };
     }
