@@ -182,9 +182,6 @@ export default class Mcts implements PolicyAgent{
             const prob = probs[i];
             policy[action - 1] = prob;
         }
-        console.log(this.root.children.map(
-            child => child.visits
-        ), action);
         this.step(action);
         return { action, policy };
     }
