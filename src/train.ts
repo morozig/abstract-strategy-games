@@ -39,7 +39,7 @@ const trainMcts = async (game: Game) => {
         for (let gameHistory of savedhistories) {
             modelHistories.push(gameHistory);
         }
-        console.log(modelHistories);
+        // console.log(modelHistories);
     } else {
         const rules = game.rules;
 

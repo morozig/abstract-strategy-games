@@ -4,10 +4,12 @@ import {
     loadModel
 } from '../../../lib/api';
 
-const numFilters = 128;
+const numFilters = 512;
 const defaultNumLayers = 4;
-const numEpochs = 15;
+const numEpochs = 100;
 const dropout = 0.3;
+const learningRate = 0.001;
+const batchSize = 512;
 
 interface Options {
     height: number;
@@ -144,8 +146,7 @@ export default class Network {
         return model;
     };
     private compile() {
-        const optimizer = tf.train.adam(0.001);
-        // const optimizer = tf.train.sgd(0.1);
+        const optimizer = tf.train.adam(learningRate);
 
         this.model.compile({
             optimizer: optimizer,
@@ -177,7 +178,7 @@ export default class Network {
             xsTensor,
             ysTensors,
             {
-                batchSize: 256,
+                batchSize,
                 epochs: numEpochs,
                 shuffle: true,
                 validationSplit: 0.01,

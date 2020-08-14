@@ -5,14 +5,15 @@ import {
     State
 } from './board';
 import Rules from './rules';
-// import Network from './networks/general';
+import Network from './networks/general';
 // import Network from './networks/fully-connected';
 // import Network from './networks/conv-only';
-import Network from './networks/residual';
+// import Network from './networks/residual';
 import Batcher from '../../lib/batcher';
 import PolicyAction from '../../interfaces/policy-action';
 // import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
+import { softMax } from '../../lib/helpers';
 
 type Input = number[][][];
 type Output = [number[], number];
