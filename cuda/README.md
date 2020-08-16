@@ -2,23 +2,26 @@
 adduser igor
 usermod -aG sudo igor
 su - igor
-sudo ls -la /root
+sudo apt-get update
+sudo apt-get install -y nano
+mkdir ~/.ssh
+nano ~/.ssh/authorized_keys
 
 sudo apt-get update
-sudo apt-get install ubuntu-drivers-common
+sudo apt-get install -y ubuntu-drivers-common
 sudo ubuntu-drivers devices
-sudo apt-get install nvidia-driver-440
+sudo apt-get install -y nvidia-driver-440
 sudo reboot
 
 nvidia-smi
 
 sudo apt update
-sudo apt install apt-transport-https ca-certificates curl software-properties-common
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
 sudo apt update
 apt-cache policy docker-ce
-sudo apt install docker-ce
+sudo apt install -y docker-ce
 sudo systemctl status docker
 sudo usermod -aG docker ${USER}
 
@@ -33,12 +36,21 @@ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.li
 sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 docker run --gpus all nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 nvidia-smi
-
-docker run --gpus all -ti --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04 sh
 ```
 
 ```bash
+sudo apt-get install -y git
+mkdir app
+cd app
+git clone https://github.com/morozig/abstract-strategy-games.git
+
+```
+
+```bash
+cd abstract-strategy-games
+cd cuda
 docker build -t tfjs-node-gpu .
+cd ..
 
 ```
 

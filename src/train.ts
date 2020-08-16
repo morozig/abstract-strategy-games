@@ -123,7 +123,7 @@ const trainGeneration = async (
         // console.log(modelHistories);
         await saveHistory(game.name, modelName, modelHistories);
     }
-    console.log(modelHistories);
+    // console.log(modelHistories);
     await model.train(modelHistories, {improve});
 
     const gamesCount = 25;
@@ -204,8 +204,8 @@ const run = async () => {
     const game = new GameClass(5, 5, 4);
 
     // console.log(trainMcts);
-    console.log(trainAlpha);
-    // await trainAlpha(game);
+    // console.log(trainAlpha);
+    await trainAlpha(game);
     await trainMcts(game);
 };
 
