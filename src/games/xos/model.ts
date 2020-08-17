@@ -14,6 +14,7 @@ import PolicyAction from '../../interfaces/policy-action';
 // import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
 import { softMax } from '../../lib/helpers';
+import GamePrediction from '../../interfaces/game-prediction';
 
 type Input = number[][][];
 type Output = [number[], number];
@@ -94,8 +95,7 @@ const getInput = (states: State[], rules: Rules) => {
     };
 };
 
-const getSymHistories = (history: PolicyAction[], rules: Rules) => {
-    const symHistories = [history];
+const getSyms = (rules: Rules) => {
     const syms = [
         PlaneSymmetry.Horizontal,
         PlaneSymmetry.Vertical,
@@ -108,6 +108,12 @@ const getSymHistories = (history: PolicyAction[], rules: Rules) => {
             PlaneSymmetry.Rotation270
         ] : []
     );
+    return syms;
+};
+
+const getSymHistories = (history: PolicyAction[], rules: Rules) => {
+    const symHistories = [history];
+    const syms = getSyms(rules);
 
     for (let sym of syms) {
         const symHistory = history.map(({ action, policy }) => {
@@ -143,6 +149,83 @@ const getSymHistories = (history: PolicyAction[], rules: Rules) => {
         symHistories.push(symHistory);
     }
     return symHistories;
+};
+
+const historyToSyms = (history: number[], rules: Rules) => {
+    const symHistories = [history];
+    const syms = getSyms(rules);
+
+    for (let sym of syms) {
+        const symHistory = history.map(action => {
+            const actionPosition = rules.actionToIJ(action);
+            const symPosition = plane({
+                i: actionPosition.i,
+                j: actionPosition.j,
+                height: rules.height,
+                width: rules.width,
+                sym
+            });
+            const symAction = rules.positionToAction(symPosition);
+            return symAction;
+        });
+        symHistories.push(symHistory);
+    }
+    return symHistories;
+};
+
+const symsToPrediction = (symPredictions: GamePrediction[], rules: Rules) => {
+    const syms = getSyms(rules);
+    const predictions = symPredictions.slice(0, 2);
+
+    for (let i = 0; i < syms.length; i++) {
+        const symPrediction = symPredictions[i + 1];
+        const symPolicy = symPrediction.policy;
+        const sym = syms[i];
+
+        const policy = symPolicy.map((_, symIindex) => {
+            const symPosition = rules.actionToIJ(symIindex + 1);
+            const position = plane({
+                i: symPosition.i,
+                j: symPosition.j,
+                height: rules.height,
+                width: rules.width,
+                sym,
+                revert: true
+            });
+            const index = rules.positionToAction(
+                position
+            ) - 1;
+            const value = symPolicy[index];
+            return value;
+        });
+
+        const reward = symPrediction.reward;
+        
+        const prediction = {
+            policy,
+            reward
+        };
+        predictions.push(prediction);
+    }
+
+    const sumRewards = predictions.reduce(
+        (total, current) => total + current.reward,
+        0
+    );
+    const sumPolicies = predictions.reduce(
+        (total, current) => total.map(
+            (totalProb, i) => totalProb + current.policy[i]
+        ),
+        predictions[0].policy.map(_ => 0)
+    );
+
+    const meanPrediction = {
+        policy: sumPolicies.map(
+            sumProb => sumProb / predictions.length
+        ),
+        reward: sumRewards / predictions.length
+    } as GamePrediction;
+    return meanPrediction;
 };
 
 const getStates = (history: number[], rules: Rules) => {
@@ -187,7 +270,7 @@ export default class Model implements GameModel {
         if (parallel) {
             this.batcher = new Batcher(
                 networkPredictor(this.network),
-                100,
+                100 * (getSyms(this.rules).length + 1),
                 10
             );
         }
@@ -241,18 +324,30 @@ export default class Model implements GameModel {
         await this.network.load(this.gameName, name);
     }
     async predict(history: number[]) {
-        const states = getStates(history, this.rules);
-        const { input } = getInput(states, this.rules);
-        let output: Output;
-        if (!this.batcher) {
-            [output] = await this.network.predict([input]);
-        } else {
-            output = await this.batcher.call(input);
-        }
-        const [ policy, reward ] = output;
-        return {
-            reward,
-            policy
-        };
+        const symHistories = historyToSyms(history, this.rules);
+        const symStateHistories = symHistories.map(
+            symHistory => getStates(symHistory, this.rules)
+        );
+        const symInputs = symStateHistories.map(
+            symStateHistory => getInput(
+                symStateHistory, this.rules
+            ).input
+        );
+
+        const symOutputs = !this.batcher ?
+            await this.network.predict(symInputs) :
+            await this.batcher.call(symInputs)
+        
+        const symPredictions = symOutputs.map(
+            ([ policy, reward ]) => ({
+                policy,
+                reward
+            } as GamePrediction)
+        );
+        const prediction = symsToPrediction(
+            symPredictions,
+            this.rules
+        );
+        return prediction;
     }
 };
