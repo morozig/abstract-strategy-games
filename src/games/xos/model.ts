@@ -13,7 +13,6 @@ import Batcher from '../../lib/batcher';
 import PolicyAction from '../../interfaces/policy-action';
 // import { softMax } from '../../lib/helpers';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
-import { softMax } from '../../lib/helpers';
 import GamePrediction from '../../interfaces/game-prediction';
 
 type Input = number[][][];

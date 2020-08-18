@@ -197,7 +197,7 @@ export default class Model implements GameModel {
         if (!this.batcher) {
             [output] = await this.network.predict([input]);
         } else {
-            output = await this.batcher.call(input);
+            [output] = await this.batcher.call([input]);
         }
         const [ policy, reward ] = output;
         return {
