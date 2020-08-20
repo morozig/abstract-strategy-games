@@ -25,7 +25,7 @@ export default class Xos implements Game {
             modelName: 'mcts-5000'
         },
     ] as GamePlayer[];
-    readonly randomTurnsCount = 12;
+    readonly randomTurnsCount = 6;
     constructor(height: number, width: number, same: number) {
         this.height = height;
         this.width = width;

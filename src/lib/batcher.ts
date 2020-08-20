@@ -48,15 +48,13 @@ export default class Batcher<I,O> {
             }
         }
     }
-    call(inputs: I[]) {
-        return Promise.all(inputs.map(
-            input => new Promise((resolve: (output: O) => void) => {
-                const item = {
-                    input,
-                    resolve
-                };
-                this.add(item);
-            })
-        ));
+    call(input: I) {
+        return new Promise((resolve: (output: O) => void) => {
+            const item = {
+                input,
+                resolve
+            };
+            this.add(item);
+        });
     }
 };

@@ -14,7 +14,6 @@ interface PlaneTransformOptions {
     height: number;
     width: number;
     sym: PlaneSymmetry;
-    revert?: boolean;
 }
 
 const plane = (options: PlaneTransformOptions) => {
@@ -44,13 +43,9 @@ const plane = (options: PlaneTransformOptions) => {
             };
         }
         case (PlaneSymmetry.Rotation90): {
-            return !!options.revert ?
-            {
+            return {
                 i: options.j,
                 j: options.width - options.i - 1
-            } : {
-                i: options.height - options.j - 1,
-                j: options.i
             };
         }
         case (PlaneSymmetry.Rotation180): {
@@ -60,12 +55,9 @@ const plane = (options: PlaneTransformOptions) => {
             };
         }
         case (PlaneSymmetry.Rotation270): {
-            return !!options.revert ? {
+            return {
                 i: options.height - options.j - 1,
                 j: options.i
-            } : {
-                i: options.j,
-                j: options.width - options.i - 1
             };
         }
         default: {
