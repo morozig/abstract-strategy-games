@@ -6,10 +6,10 @@ import {
 
 const numFilters = 512;
 const defaultNumLayers = 4;
-const numEpochs = 100;
+const numEpochs = 10;
 const dropout = 0.3;
 const learningRate = 0.001;
-const batchSize = 512;
+const batchSize = 64;
 
 interface Options {
     height: number;
@@ -40,7 +40,7 @@ export default class Network {
             strides: 1,
             padding: 'same',
             useBias: false,
-            kernelRegularizer: tf.regularizers.l2()
+            kernelRegularizer: 'l1l2'
         }).apply(input) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 3
@@ -55,7 +55,7 @@ export default class Network {
             strides: 1,
             padding: 'same',
             useBias: false,
-            kernelRegularizer: tf.regularizers.l2()
+            kernelRegularizer: 'l1l2'
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 3
@@ -70,7 +70,7 @@ export default class Network {
             strides: 1,
             padding: 'valid',
             useBias: false,
-            kernelRegularizer: tf.regularizers.l2()
+            kernelRegularizer: 'l1l2'
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 3
@@ -85,7 +85,7 @@ export default class Network {
             strides: 1,
             padding: 'valid',
             useBias: false,
-            kernelRegularizer: tf.regularizers.l2()
+            kernelRegularizer: 'l1l2'
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 3
@@ -100,7 +100,7 @@ export default class Network {
         network = tf.layers.dense({
             units: 2 * numFilters,
             useBias: false,
-            kernelRegularizer: tf.regularizers.l2()
+            kernelRegularizer: 'l1l2'
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 1
@@ -115,7 +115,7 @@ export default class Network {
         network = tf.layers.dense({
             units: numFilters,
             useBias: false,
-            kernelRegularizer: tf.regularizers.l2()
+            kernelRegularizer: 'l1l2'
         }).apply(network) as tf.SymbolicTensor;
         network = tf.layers.batchNormalization({
             axis: 1
