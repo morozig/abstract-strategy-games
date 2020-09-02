@@ -11,7 +11,15 @@ sudo apt-get update
 sudo apt-get install -y ubuntu-drivers-common
 sudo ubuntu-drivers devices
 sudo apt-get install -y nvidia-driver-440
+sudo apt install -y nvidia-cuda-toolkit
 sudo reboot
+
+or variant B
+sudo apt-get install build-essential gcc-multilib dkms
+# https://www.nvidia.com/Download/index.aspx
+curl -O https://us.download.nvidia.com/XFree86/Linux-x86_64/450.66/NVIDIA-Linux-x86_64-450.66.run
+sudo bash ./NVIDIA-Linux-x86_64-450.66.run
+
 
 nvidia-smi
 
