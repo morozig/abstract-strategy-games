@@ -15,11 +15,14 @@ sudo apt install -y nvidia-cuda-toolkit
 sudo reboot
 
 or variant B
-sudo apt-get install build-essential gcc-multilib dkms
+# sudo apt-get install -y build-essential gcc-multilib dkms
+sudo apt-get update
+sudo apt-get install -y linux-headers-4.15.0-112-generic
 # https://www.nvidia.com/Download/index.aspx
-curl -O https://us.download.nvidia.com/XFree86/Linux-x86_64/450.66/NVIDIA-Linux-x86_64-450.66.run
-sudo bash ./NVIDIA-Linux-x86_64-450.66.run
-
+curl -O https://us.download.nvidia.com/XFree86/Linux-x86_64/440.100/NVIDIA-Linux-x86_64-440.100.run
+# curl -O https://us.download.nvidia.com/XFree86/Linux-x86_64/450.66/NVIDIA-Linux-x86_64-450.66.run
+sudo bash ./NVIDIA-Linux-x86_64-440.100.run
+# sudo bash ./NVIDIA-Linux-x86_64-450.66.run
 
 nvidia-smi
 

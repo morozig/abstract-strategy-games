@@ -18,60 +18,6 @@ import { GamePlayerType } from './interfaces/game-player';
 
 const winRate = 0.6;
 
-const trainMcts = async (game: Game) => {
-    const planCount = game.players.find(
-        player => player.type === GamePlayerType.Mcts
-    )?.planCount || game.rules.actionsCount; 
-    const modelName = `mcts-${planCount}`;
-    const models = await getModels(game.name);
-    console.log(game.name, models);
-    if (models.includes(modelName)) {
-        console.log(`${modelName} trained!`);
-        return;
-    }
-    const modelHistories = [] as GameHistory[];
-    const histories = await getHistories(game.name);
-    if (histories.includes(modelName)) {
-        const savedhistories = await loadHistory(
-            game.name,
-            modelName
-        );
-        for (let gameHistory of savedhistories) {
-            modelHistories.push(gameHistory);
-        }
-        // console.log(modelHistories);
-    } else {
-        const rules = game.rules;
-
-        const pureMctsOptions = {
-            gameRules: rules,
-            planCount,
-            randomize: true,
-            randomTurnsCount: game.randomTurnsCount
-        };
-        const player1 = new Mcts(pureMctsOptions);
-        const player2 = new Mcts(pureMctsOptions);
-        const agents = [player1, player2];
-
-        for (let i = 0; i < 100; i++) {
-            const gameHistory = await play(
-                rules,
-                agents,
-                `${i + 1}`
-            );
-            modelHistories.push(gameHistory);
-        }
-        console.log(modelHistories);
-        await saveHistory(game.name, modelName, modelHistories);
-    }
-    const model = game.createModel();
-    // const trainSuccess = await model.train(modelHistories);
-    await model.train(modelHistories);
-    // if (trainSuccess) {
-    await model.save(modelName);
-    // }
-};
-
 const trainGeneration = async (
     game: Game,
     generation: number,
