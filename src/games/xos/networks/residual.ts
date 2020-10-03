@@ -12,7 +12,7 @@ import {
 } from '../../../lib/api';
 
 const numFilters = 16;
-const defaultNumLayers =2;
+const defaultNumLayers = 5;
 const numEpochs = 10;
 const dropout = 0.3;
 
@@ -62,6 +62,7 @@ export default class Network {
             units: 256,
             dropout
         });
+        
         network = denseLayer(network, {
             name: 'dense2',
             units: 128,

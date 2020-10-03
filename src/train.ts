@@ -1,9 +1,7 @@
 import {
-    playAlpha,
-    play
+    playAlpha
 } from './lib/play';
 import Game from '../src/interfaces/game';
-import Mcts from './agents/mcts';
 import GameHistory from './interfaces/game-history';
 import {
     getModels,
@@ -149,10 +147,7 @@ const run = async () => {
 
     const game = new GameClass(5, 5, 4);
 
-    // console.log(trainMcts);
-    // console.log(trainAlpha);
     await trainAlpha(game);
-    await trainMcts(game);
 };
 
 export default run;
