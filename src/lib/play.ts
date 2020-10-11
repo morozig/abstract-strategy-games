@@ -48,6 +48,7 @@ interface PlayAlphaOptions {
     model1: GameModel;
     model2: GameModel;
     gameRules: GameRules;
+    workerPath: string;
     gamesCount: number;
     switchSides?: boolean;
     planCount?: number;
