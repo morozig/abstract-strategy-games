@@ -8,7 +8,7 @@ const bonusScale = 5;
 // const randomizeTemp = 0.1;
 const printPolicy = false;
 
-type Predictor = (history: number[]) => Promise<GamePrediction>;
+export type Predictor = (history: number[]) => Promise<GamePrediction>;
 
 interface MctsOptions {
     gameRules: GameRules;

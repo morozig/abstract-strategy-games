@@ -43,11 +43,9 @@ const play = async (
     return { rewards, history } as GameHistory;
 };
 
-
 interface PlayAlphaOptions {
     model1: GameModel;
     model2: GameModel;
-    gameRules: GameRules;
     workerPath: string;
     gamesCount: number;
     switchSides?: boolean;
