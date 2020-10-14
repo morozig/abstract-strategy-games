@@ -41,5 +41,61 @@ export default class AlphaNetwork {
       metrics: ['accuracy']
     });
   }
-  async fit(inputs: TypedArray[], )
+  async fit(
+    inputs: Float32Array[],
+    outputs: [
+      Float32Array[],
+      Float32Array[]
+    ]
+  ){
+    const inputLength = this.height * this.width * this.depth;
+    const totalLength = inputs.reduce(
+      (total, current) => total + current.length,
+      0
+    );
+    const totalInputs = totalLength / inputLength;
+    const xsTensor = tf.tensor(inputs, [
+      totalInputs,
+      this.height,
+      this.width,
+      this.depth
+    ]);
+    const policiesTensor = tf.tensor2d(outputs.map(
+      output => output[0]
+    ));
+    const rewardsTensor = tf.tensor2d(outputs.map(
+      output => [output[1]]
+    ));
+    const ysTensors = [
+      policiesTensor,
+      rewardsTensor
+    ];
+
+    const trainingHistory = await this.model.fit(
+      xsTensor,
+      ysTensors,
+      {
+        batchSize: this.batchSize,
+        epochs: this.epochs,
+        shuffle: true,
+        validationSplit: 0.01,
+        callbacks: {
+          onEpochEnd: console.log
+        }
+      }
+    );
+
+    xsTensor.dispose();
+    policiesTensor.dispose();
+    rewardsTensor.dispose();
+    console.log(trainingHistory);
+    const loss = trainingHistory.history.loss[
+      this.epochs - 1
+    ] as number;
+    return loss;
+  };
+
+  async predict(inputs: Float32Array[]) {
+
+  }
 };
