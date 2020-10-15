@@ -1,5 +1,8 @@
 import * as tf from '@tensorflow/tfjs';
-import { TypedArray } from '@tensorflow/tfjs';
+import {
+  saveModel,
+  loadModel
+} from './api';
 
 export interface AlphaNetworkOptions {
   height: number;
@@ -42,24 +45,10 @@ export default class AlphaNetwork {
     });
   }
   async fit(
-    inputs: Float32Array[],
-    outputs: [
-      Float32Array[],
-      Float32Array[]
-    ]
+    inputs: number[][][][],
+    outputs: [number[], number][]
   ){
-    const inputLength = this.height * this.width * this.depth;
-    const totalLength = inputs.reduce(
-      (total, current) => total + current.length,
-      0
-    );
-    const totalInputs = totalLength / inputLength;
-    const xsTensor = tf.tensor(inputs, [
-      totalInputs,
-      this.height,
-      this.width,
-      this.depth
-    ]);
+    const xsTensor = tf.tensor4d(inputs);
     const policiesTensor = tf.tensor2d(outputs.map(
       output => output[0]
     ));
@@ -93,9 +82,90 @@ export default class AlphaNetwork {
       this.epochs - 1
     ] as number;
     return loss;
-  };
+  }
+  async predict(inputs: number[][][][]) {
+    const inputsTensor = tf.tensor4d(inputs);
+    const [ policiesTensor, rewardsTensor ] = this.model.predict(
+      inputsTensor
+    ) as [tf.Tensor2D, tf.Tensor2D];
+    const policies = await policiesTensor.array();
+    const rewards = await rewardsTensor.array();
 
-  async predict(inputs: Float32Array[]) {
+    inputsTensor.dispose();
+    policiesTensor.dispose();
+    rewardsTensor.dispose();
 
+    const outputs = policies.map(
+      (policy, i) => [policy, rewards[i][0]] as [number[], number]
+    );
+    return outputs;
+  }
+  async predictBatches(batches: Float32Array[]) {
+    const inputSize = this.height * this.width * this.depth;
+    const { batchesIndices } = batches.reduce(
+      ({batchesIndices, last}, current) => ({
+        batchesIndices: batchesIndices.concat(
+          last + current.length / inputSize
+        ),
+        last: last + current.length / inputSize
+      }),
+      {batchesIndices: [0], last: 0}
+    );
+    const inputsLength = batchesIndices[
+      batchesIndices.length - 1
+    ];
+    const inputsTensor = tf.tensor(
+      batches,
+      [
+        inputsLength,
+        this.height,
+        this.width,
+        this.depth
+      ]
+    ) as tf.Tensor4D;
+    const [ policiesTensor, rewardsTensor ] = this.model.predict(
+      inputsTensor
+    ) as [tf.Tensor2D, tf.Tensor2D];
+
+    const policies = await policiesTensor.data() as Float32Array;
+    const rewards = await rewardsTensor.data() as Float32Array;
+
+    inputsTensor.dispose();
+    policiesTensor.dispose();
+    rewardsTensor.dispose();
+
+    const policySize = this.height * this.width;
+    const policyBatches = batchesIndices.map(
+      (batchIndex, i, arr) => policies.subarray(
+        batchIndex * policySize,
+        arr[i + 1] * policySize
+      )
+    );
+
+    const rewardSize = 1;
+    const rewardBatches = batchesIndices.map(
+      (batchIndex, i, arr) => rewards.subarray(
+        batchIndex * rewardSize,
+        arr[i + 1] * rewardSize
+      )
+    );
+
+    const outputs = [
+      policyBatches, rewardBatches
+    ] as [Float32Array[], Float32Array[]];
+
+    return outputs;
+  }
+  async save(gameName: string, modelName: string) {
+    await saveModel(
+      this.model,
+      gameName,
+      modelName
+    );
+  }
+  async load(gameName: string, modelName: string) {
+    this.model.dispose();
+    this.model = await loadModel(gameName, modelName);
+    this.compile();
   }
 };
