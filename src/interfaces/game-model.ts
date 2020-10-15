@@ -2,15 +2,18 @@ import GameHistory from './game-history';
 import GamePrediction from './game-prediction';
 
 export interface TrainOptions {
-    improve?: boolean;
+  improve?: boolean;
 }
 
 export default interface GameModel {
-    train (
-        gameHistories: GameHistory[],
-        options?: TrainOptions
-    ): Promise<boolean>;
-    save (name: string): Promise<void>;
-    load (name: string): Promise<void>;
-    predict(history: number[]): Promise<GamePrediction>;
+  train (
+    gameHistories: GameHistory[],
+    options?: TrainOptions
+  ): Promise<boolean>;
+  save (name: string): Promise<void>;
+  load (name: string): Promise<void>;
+  predict(history: number[]): Promise<GamePrediction>;
+  predictBatches(
+    batches: Float32Array[]
+  ): Promise<[Float32Array[], Float32Array[]]>;
 }
