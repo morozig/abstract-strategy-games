@@ -12,17 +12,10 @@ interface Pair {
   output: Output;
 };
 
-const networkPredictor = (network: Network) => {
-    return (inputs: Input[]) => {
-        return network.predict(inputs);
-    };
-};
-
 export default class AlphaModel {
-    private rules: Rules;
     private network: Network;
     private gameName: string;
-    constructor(gameName: string, rules: Rules) {
+    constructor(gameName: string) {
         this.gameName = gameName;
         this.rules = rules;
         this.network = new Network({
@@ -32,8 +25,7 @@ export default class AlphaModel {
         });
     }
     async train(
-        gameHistories: GameHistory[],
-        options?: TrainOptions
+        gameHistories: GameHistory[]
     ) {
         const inputs = [] as Input[];
         const outputs = [] as Output[];
