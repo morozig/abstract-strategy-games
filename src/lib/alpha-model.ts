@@ -59,9 +59,6 @@ export default class AlphaModel {
             outputs.push(pair.output)
         });
         console.log(`training data length: ${inputs.length}`);
-        if (options && options.improve) {
-            this.network.addLayer();
-        }
         const loss = await this.network.fit(inputs, outputs);
         return loss < 0.5;
     }
