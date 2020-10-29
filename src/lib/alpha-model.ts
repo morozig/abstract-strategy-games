@@ -54,35 +54,18 @@ export default class AlphaModel {
   ) {
     const inputs = [] as Input[];
     const outputs = [] as Output[];
-    const pairs = [] as Pair[];
+    const uniquePairs = new Map<string, Pair>();
 
     for (let gameHistory of gameHistories) {
-      const symHistories = this.rules.getSymHistories(
-        gameHistory.history
-      );
-      for (let entries of symHistories) {
-          const history = entries.map(({action}) => action);
-          const states = getStates(history, this.rules);
-          states.pop();
-          for (let i = 0; i < states.length; i++) {
-              const layerStates = states.slice(0, i + 1);
-              const { input } = getInput(layerStates, this.rules);
-              const lastState = states[i];
-              const lastPlayerIndex = lastState.playerIndex;
-              const reward = gameHistory.rewards[lastPlayerIndex];
-              const { policy } = gameHistory.history[i];
-              const output = getOutput(reward, policy);
-              pairs.push({
-                  input,
-                  output
-              });
-          }
+      const pairs = this.rules.getPairs(gameHistory);
+      for (let pair of pairs) {
+        const { input } = pair;
+        const hash = input.flat(2).join('');
+        if (!uniquePairs.has(hash)) {
+          uniquePairs.set(hash, pair);
+        }
       }
     }
-    pairs.forEach(pair => {
-        inputs.push(pair.input);
-        outputs.push(pair.output)
-    });
     console.log(`training data length: ${inputs.length}`);
     const loss = await this.network.fit(inputs, outputs);
     return loss;
