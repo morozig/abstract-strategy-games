@@ -66,6 +66,13 @@ export default class AlphaModel {
         }
       }
     }
+    const pairs = Array.from(uniquePairs.values());
+    pairs.sort(() => Math.random() - 0.5);
+
+    for (let { input, output } of pairs) {
+      inputs.push(input);
+      outputs.push(output);
+    }
     console.log(`training data length: ${inputs.length}`);
     const loss = await this.network.fit(inputs, outputs);
     return loss;
@@ -77,18 +84,16 @@ export default class AlphaModel {
       await this.network.load(this.gameName, name);
   }
   async predict(history: number[]) {
-      const states = getStates(history, this.rules);
-      const { input } = getInput(states, this.rules);
-      let output: Output;
-      if (!this.batcher) {
-          [output] = await this.network.predict([input]);
-      } else {
-          output = await this.batcher.call(input);
-      }
-      const [ policy, reward ] = output;
-      return {
-          reward,
-          policy
-      };
+    const input = this.rules.getInput(history);
+    const [output] = await this.network.predict([input]);
+
+    const [ policy, reward ] = output;
+    return {
+      reward,
+      policy
+    };
+  }
+  predictBatches(batches: Float32Array[]){
+    return this.network.predictBatches(batches);
   }
 };
