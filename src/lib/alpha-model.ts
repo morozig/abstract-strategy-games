@@ -1,19 +1,11 @@
 import GameHistory from '../interfaces/game-history';
-import Batcher from '../lib/batcher';
-import PolicyAction from '../interfaces/policy-action';
-import GameRules from '../interfaces/game-rules';
-import { PlaneSymmetry, plane } from '../lib/transforms';
-import { softMax } from '../lib/helpers';
+import GameRules, {
+  Input,
+  Output,
+  Pair
+} from '../interfaces/game-rules';
 import AlphaNetwork from './alpha-network';
 import * as tf from '@tensorflow/tfjs';
-
-type Input = number[][][];
-type Output = [number[], number];
-
-interface Pair {
-  input: Input;
-  output: Output;
-};
 
 interface AlphaModelOptions {
   gameName: string;
