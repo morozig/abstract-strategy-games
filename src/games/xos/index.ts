@@ -1,6 +1,5 @@
 import Game from '../../interfaces/game';
 import Rules from './rules';
-import Model from './model';
 import { component } from './component';
 import GamePlayer, { GamePlayerType } from '../../interfaces/game-player';
 import GameComponent from '../../interfaces/game-component';

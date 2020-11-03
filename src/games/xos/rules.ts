@@ -1,8 +1,8 @@
 import GameRules from '../../interfaces/game-rules';
 import {
-    Tile,
-    Board,
-    State
+  Tile,
+  Board,
+  State
 } from './board';
 import { getWinner2D } from '../../lib/xos';
 
@@ -11,8 +11,8 @@ const copy = (board: Board) => board.map(row => row.slice()) as Board;
 export default class Rules implements GameRules {
     readonly height: number;
     readonly width: number;
-    readonly same: number;
     readonly actionsCount: number;
+    private same: number;
     constructor(height: number, width: number, same: number) {
         this.height = height;
         this.width = width;
