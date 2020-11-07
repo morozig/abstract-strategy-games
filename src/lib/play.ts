@@ -6,6 +6,18 @@ import GameModel from '../interfaces/game-model';
 import Alpha from '../agents/alpha';
 import { durationHR } from './helpers';
 
+const getStates = (history: number[], rules: GameRules) => {
+  const initial = rules.init();
+  const states = [initial];
+  let last = initial;
+  for (let action of history) {
+    const { state } = rules.step(last, action);
+    states.push(state);
+    last = state;
+  }
+  return states;
+};
+
 const play = async (
     gameRules: GameRules,
     agents: PolicyAgent[],
@@ -112,6 +124,7 @@ const playAlpha = async (options: PlayAlphaOptions) => {
 };
 
 export {
-    play,
-    playAlpha
+  getStates,
+  play,
+  playAlpha
 };
