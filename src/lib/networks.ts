@@ -4,7 +4,7 @@ const convLayer2D = (
     input: tf.SymbolicTensor,
     options: {
         numFilters: number;
-        kernelSize?: number;
+        kernelSize?: number | number[];
         name: string;
         noActivation?: boolean;
         padding?: 'same' | 'valid'

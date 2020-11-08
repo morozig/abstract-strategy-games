@@ -9,6 +9,5 @@ export default interface Game {
     readonly rules: GameRules;
     readonly Component: GameComponent;
     readonly players: GamePlayer[];
-    readonly randomTurnsCount: number;
     createModel(): AlphaModel;
 };

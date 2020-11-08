@@ -33,8 +33,8 @@ const trainGeneration = async (
     )?.planCount || game.rules.actionsCount; 
     const previousGeneration = generation - 1;
     const previousModelName = `alpha-${previousGeneration}`;
-    const previousModel = game.createModel(true);
-    const model = game.createModel(true);
+    const previousModel = game.createModel();
+    const model = game.createModel();
 
     if (previousGeneration > 0) {
         await previousModel.load(previousModelName);
@@ -68,7 +68,7 @@ const trainGeneration = async (
         await saveHistory(game.name, modelName, modelHistories);
     }
     // console.log(modelHistories);
-    await model.train(modelHistories, {improve});
+    await model.train(modelHistories);
 
     const gamesCount = 25;
     const contest = await playAlpha({
