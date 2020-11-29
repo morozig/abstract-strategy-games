@@ -5,6 +5,12 @@ import PolicyAction from '../interfaces/policy-action';
 import Alpha from '../agents/alpha';
 import { durationHR } from './helpers';
 import AlphaModel from './alpha-model';
+import {
+  spawn,
+  Pool,
+  Worker
+} from 'threads';
+import { PlayWorkerType } from './play-worker';
 
 const getStates = (history: number[], rules: GameRules) => {
   const initial = rules.init();
@@ -66,6 +72,17 @@ interface PlayAlphaOptions {
 }
 
 const playAlpha = async (options: PlayAlphaOptions) => {
+  const pool = Pool(
+    () => {
+      const worker = spawn<PlayWorkerType>(new Worker(options.workerPath));
+      worker.inputs()
+      return worker;
+    }, 
+    {
+      concurrency: 100
+    }
+  );
+
     const gamePromises = [] as Promise<GameHistory>[];
     const alphaOptions = {
         gameRules: options.gameRules,
