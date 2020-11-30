@@ -71,7 +71,7 @@ interface PlayAlphaOptions {
   randomize?: boolean;
 }
 
-const playAlpha = async (options: PlayAlphaOptions) => {
+const playSelfAlpha = async (options: PlayAlphaOptions) => {
   const pool = Pool(
     () => {
       const worker = spawn<PlayWorkerType>(new Worker(options.workerPath));
@@ -143,5 +143,5 @@ const playAlpha = async (options: PlayAlphaOptions) => {
 export {
   getStates,
   play,
-  playAlpha
+  playSelfAlpha as playAlpha
 };

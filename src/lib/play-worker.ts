@@ -25,7 +25,5 @@ export default class PlayWorker implements PlayWorkerType
   constructor(gameRules: GameRules) {
     this.gameRules = gameRules;
   }
-  play(){
-    return 0;
-  }
+  
 };
