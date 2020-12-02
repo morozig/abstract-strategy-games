@@ -3,7 +3,7 @@ import GameHistory from '../interfaces/game-history';
 import PolicyAgent from '../interfaces/policy-agent';
 import PolicyAction from '../interfaces/policy-action';
 import Alpha from '../agents/alpha';
-import { durationHR } from './helpers';
+import { cpusCount, durationHR } from './helpers';
 import AlphaModel from './alpha-model';
 import {
   spawn,
@@ -61,27 +61,34 @@ const play = async (
   return { rewards, history } as GameHistory;
 };
 
-interface PlayAlphaOptions {
-  model1: AlphaModel;
-  model2: AlphaModel;
+interface PlaySelfAlphaOptions {
+  model: AlphaModel;
   workerPath: string;
   gamesCount: number;
-  switchSides?: boolean;
   planCount?: number;
   randomize?: boolean;
 }
 
-const playSelfAlpha = async (options: PlayAlphaOptions) => {
-  const pool = Pool(
-    () => {
-      const worker = spawn<PlayWorkerType>(new Worker(options.workerPath));
-      worker.inputs()
-      return worker;
-    }, 
-    {
-      concurrency: 100
-    }
+const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
+  const size = await cpusCount();
+  const concurrency = Math.min(
+    Math.floor(options.gamesCount / size),
+    100
   );
+
+  const spawnWorker = async () => {
+    const worker = await spawn<PlayWorkerType>(
+      new Worker(options.workerPath)
+    );
+    const outputs = worker.outputs();
+    worker.inputs().subscribe()
+    return worker;
+  }
+
+  const pool = Pool(spawnWorker, {
+    concurrency,
+    size
+  });
 
     const gamePromises = [] as Promise<GameHistory>[];
     const alphaOptions = {

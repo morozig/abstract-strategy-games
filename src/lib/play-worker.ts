@@ -7,17 +7,10 @@ import GameHistory from '../interfaces/game-history';
 import PolicyAgent from '../interfaces/policy-agent';
 import PolicyAction from '../interfaces/policy-action';
 
-type WorkerInput = {
-  playerIndex: number;
-  input: Input;
-}[];
-
-type WorkerOutput = Output[];
-
 export type PlayWorkerType = {
   play: () => Promise<GameHistory>;
-  inputs: () => Observable<WorkerInput>;
-  outputs: () => Subject<WorkerOutput>;
+  inputs: () => Observable<Input[]>;
+  outputs: () => Subject<Output[]>;
 };
 export default class PlayWorker implements PlayWorkerType
 {
