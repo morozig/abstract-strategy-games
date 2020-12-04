@@ -4,7 +4,7 @@ import GameRules, {
   Output,
   Pair
 } from '../interfaces/game-rules';
-import AlphaNetwork from './alpha-network';
+import AlphaNetwork, { TypedInput } from './alpha-network';
 import * as tf from '@tensorflow/tfjs';
 
 interface AlphaModelOptions {
@@ -85,7 +85,7 @@ export default class AlphaModel {
       policy
     };
   }
-  predictBatches(batches: Float32Array[]){
-    return this.network.predictBatches(batches);
+  predictBatch(inputs: TypedInput[]){
+    return this.network.predict(inputs);
   }
 };

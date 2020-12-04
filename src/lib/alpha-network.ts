@@ -1,8 +1,12 @@
 import * as tf from '@tensorflow/tfjs';
+import { Input, Output } from '../interfaces/game-rules';
 import {
   saveModel,
   loadModel
 } from './api';
+
+export type TypedInput = Float32Array;
+export type TypedOutput = [Float32Array, Float32Array];
 
 export interface AlphaNetworkOptions {
   height: number;
@@ -45,8 +49,8 @@ export default class AlphaNetwork {
     });
   }
   async fit(
-    inputs: number[][][][],
-    outputs: [number[], number][]
+    inputs: Input[],
+    outputs: Output[]
   ){
     const xsTensor = tf.tensor4d(inputs);
     const policiesTensor = tf.tensor2d(outputs.map(
@@ -83,78 +87,58 @@ export default class AlphaNetwork {
     ] as number;
     return loss;
   }
-  async predict(inputs: number[][][][]) {
-    const inputsTensor = tf.tensor4d(inputs);
-    const [ policiesTensor, rewardsTensor ] = this.model.predict(
-      inputsTensor
-    ) as [tf.Tensor2D, tf.Tensor2D];
-    const policies = await policiesTensor.array();
-    const rewards = await rewardsTensor.array();
 
-    inputsTensor.dispose();
-    policiesTensor.dispose();
-    rewardsTensor.dispose();
-
-    const outputs = policies.map(
-      (policy, i) => [policy, rewards[i][0]] as [number[], number]
-    );
-    return outputs;
-  }
-  async predictBatches(batches: Float32Array[]) {
-    const inputSize = this.height * this.width * this.depth;
-    const { batchesIndices } = batches.reduce(
-      ({batchesIndices, last}, current) => ({
-        batchesIndices: batchesIndices.concat(
-          last + current.length / inputSize
-        ),
-        last: last + current.length / inputSize
-      }),
-      {batchesIndices: [0], last: 0}
-    );
-    const inputsLength = batchesIndices[
-      batchesIndices.length - 1
-    ];
+  async predict(inputs: Input[]):
+    Promise<Output[]>;
+  async predict(inputs: TypedInput[]):
+    Promise<TypedOutput[]>;
+  async predict(inputs: Input[] | TypedInput[]) {
     const inputsTensor = tf.tensor(
-      batches,
+      inputs,
       [
-        inputsLength,
+        inputs.length,
         this.height,
         this.width,
         this.depth
       ]
     ) as tf.Tensor4D;
+
     const [ policiesTensor, rewardsTensor ] = this.model.predict(
       inputsTensor
     ) as [tf.Tensor2D, tf.Tensor2D];
+    const isTyped = inputs[0] instanceof Float32Array;
 
-    const policies = await policiesTensor.data() as Float32Array;
-    const rewards = await rewardsTensor.data() as Float32Array;
+    if (!isTyped) {
+      const policies = await policiesTensor.array();
+      const rewards = await rewardsTensor.array();
+  
+      inputsTensor.dispose();
+      policiesTensor.dispose();
+      rewardsTensor.dispose();
+  
+      const outputs = policies.map(
+        (policy, i) => [policy, rewards[i][0]] as Output
+      );
+      return outputs;
+    } else {
+      const policies = await policiesTensor.data() as Float32Array;
+      const rewards = await rewardsTensor.data() as Float32Array;
 
-    inputsTensor.dispose();
-    policiesTensor.dispose();
-    rewardsTensor.dispose();
+      inputsTensor.dispose();
+      policiesTensor.dispose();
+      rewardsTensor.dispose();
 
-    const policySize = this.height * this.width;
-    const policyBatches = batchesIndices.map(
-      (batchIndex, i, arr) => policies.subarray(
-        batchIndex * policySize,
-        arr[i + 1] * policySize
-      )
-    );
+      const policySize = this.height * this.width;
+      const rewardSize = 1;
 
-    const rewardSize = 1;
-    const rewardBatches = batchesIndices.map(
-      (batchIndex, i, arr) => rewards.subarray(
-        batchIndex * rewardSize,
-        arr[i + 1] * rewardSize
-      )
-    );
-
-    const outputs = [
-      policyBatches, rewardBatches
-    ] as [Float32Array[], Float32Array[]];
-
-    return outputs;
+      const outputs = (inputs as TypedInput[]).map(
+        (_, i) => [
+          policies.subarray(i * policySize, (i + 1) * policySize),
+          rewards.subarray(i * rewardSize, (i + 1) * rewardSize),
+        ] as TypedOutput
+      );
+      return outputs;
+    }
   }
   async save(gameName: string, modelName: string) {
     await saveModel(
