@@ -1,5 +1,3 @@
-import { sleep } from "./helpers";
-
 type BatchFunc<I,O> = (inputs: I[]) => Promise<O[]>;
 interface Item<I,O> {
   input: I;
