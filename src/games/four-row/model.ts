@@ -1,4 +1,3 @@
-import GameModel, { TrainOptions } from '../../interfaces/game-model';
 import GameHistory from '../../interfaces/game-history';
 import State from './state';
 import Tile from './tile';
@@ -93,9 +92,10 @@ const getInput = (states: State[]) => {
 
 const getSymHistories = (history: PolicyAction[]) => {
     const symHistories = [history];
-    symHistories.push(history.map(({ action, policy }) => ({
+    symHistories.push(history.map(({ action, policy, value }) => ({
         action: 8 - action,
-        policy: policy.slice().reverse()
+        policy: policy.slice().reverse(),
+        value
     })));
     return symHistories;
 };
@@ -125,7 +125,7 @@ const networkPredictor = (network: Network) => {
     };
 };
 
-export default class Model implements GameModel {
+export default class Model {
     private rules: Rules;
     private network: Network;
     private gameName: string;
@@ -146,8 +146,7 @@ export default class Model implements GameModel {
         }
     }
     async train(
-        gameHistories: GameHistory[],
-        options?: TrainOptions
+        gameHistories: GameHistory[]
     ) {
         const inputs = [] as Input[];
         const outputs = [] as Output[];
@@ -178,9 +177,6 @@ export default class Model implements GameModel {
             outputs.push(pair.output)
         });
         console.log(`training data length: ${inputs.length}`);
-        if (options && options.improve) {
-            this.network.addLayer();
-        }
         const loss = await this.network.fit(inputs, outputs);
         return loss < 0.5;
     }

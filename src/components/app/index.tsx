@@ -5,7 +5,7 @@ import GameComponent from '../game';
 import Game from '../../games/xos';
 
 const App: React.FC = () => {
-    const gameRef = useRef(new Game(5, 5, 4));
+    const gameRef = useRef(new Game());
 
     return (
         <div className={'App'}>

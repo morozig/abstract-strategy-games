@@ -7,9 +7,9 @@ import AlphaModel from '../../lib/alpha-model';
 import * as network from './networks/residual';
 
 export default class Xos implements Game {
-  readonly height: number;
-  readonly width: number;
-  readonly same: number;
+  readonly height = 5;
+  readonly width = 5;
+  readonly same = 4;
   readonly name: string;
   readonly title: string;
   readonly rules: Rules;
@@ -26,10 +26,7 @@ export default class Xos implements Game {
       modelName: 'mcts-5000'
     },
   ] as GamePlayer[];
-  constructor(height: number, width: number, same: number) {
-    this.height = height;
-    this.width = width;
-    this.same = same;
+  constructor() {
     this.name = `xos${this.height}${this.width}${this.same}`;
     this.title = `${this.height},${this.width},${this.same}-game`;
     this.rules = new Rules(this.height, this.width, this.same);

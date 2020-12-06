@@ -16,7 +16,7 @@ const actionToIJ = (board: Board, action: Action) => {
 
 const copy = (board: Board) => board.map(row => row.slice()) as Board;
 
-export default class Rules implements GameRules {
+export default class Rules {
     step(state: State, action: Action) {
         if (!this.availables(state).includes(action)){
             throw new Error('bad action!');

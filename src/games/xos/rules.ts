@@ -172,7 +172,7 @@ export default class Rules implements GameRules {
     );
 
     for (let sym of syms) {
-      const symHistory = history.map(({ action, policy, prediction }) => {
+      const symHistory = history.map(({ action, policy, value }) => {
         const actionPosition = this.actionToIJ(action);
         const symPosition = plane({
           i: actionPosition.i,
@@ -200,7 +200,7 @@ export default class Rules implements GameRules {
         return {
           action: symAction,
           policy: symPolicy,
-          prediction
+          value
         } as PolicyAction
       });
       symHistories.push(symHistory);
@@ -212,7 +212,7 @@ export default class Rules implements GameRules {
       gameHistory.history.length - 1
     ];
     const policyOutput = softMax(lastPolicyAction.policy, 0);
-    const rewardOutput = lastPolicyAction.prediction;
+    const rewardOutput = lastPolicyAction.value;
     return [policyOutput, rewardOutput] as Output;
   }
   getPairs(gameHistory: GameHistory) {

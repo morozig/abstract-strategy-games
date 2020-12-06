@@ -4,7 +4,7 @@ import Model from './model';
 import Component from './component';
 import GamePlayer, { GamePlayerType } from '../../interfaces/game-player';
 
-export default class FourRow implements Game {
+export default class FourRow {
     readonly name = 'four-row';
     readonly title = 'Four In A Row';
     readonly rules = new Rules();
