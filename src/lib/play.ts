@@ -1,4 +1,4 @@
-import GameRules from '../interfaces/game-rules';
+import GameRules, { Input } from '../interfaces/game-rules';
 import GameHistory from '../interfaces/game-history';
 import PolicyAgent from '../interfaces/policy-agent';
 import PolicyAction from '../interfaces/policy-action';
@@ -8,9 +8,12 @@ import AlphaModel from './alpha-model';
 import {
   spawn,
   Pool,
-  Worker
+  Worker,
+  Transfer
 } from 'threads';
 import { PlayWorkerType } from './play-worker';
+import Batcher from './batcher';
+import { TypedInput } from './alpha-network';
 
 const getStates = (history: number[], rules: GameRules) => {
   const initial = rules.init();
@@ -65,23 +68,39 @@ interface PlaySelfAlphaOptions {
   model: AlphaModel;
   workerPath: string;
   gamesCount: number;
-  planCount?: number;
-  randomize?: boolean;
 }
 
 const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
+  const {
+    model,
+    workerPath,
+    gamesCount,
+  } = options;
+
   const size = await cpusCount();
   const concurrency = Math.min(
     Math.floor(options.gamesCount / size),
     100
   );
 
+  const batcher = new Batcher(
+    (inputs: TypedInput[]) => model.predictBatch(inputs),
+    size * concurrency,
+    10
+  );
+
   const spawnWorker = async () => {
     const worker = await spawn<PlayWorkerType>(
-      new Worker(options.workerPath)
+      new Worker(workerPath)
     );
-    const outputs = worker.outputs();
-    worker.inputs().subscribe()
+    worker.inputs().subscribe(async (inputBuffer) => {
+      const input = new Float32Array(inputBuffer as TypedInput);
+      const output = await batcher.call(input);
+      const outputBuffers = output.map(
+        typed => typed.buffer
+      );
+      worker.output(Transfer(outputBuffers, outputBuffers));
+    })
     return worker;
   }
 
@@ -90,65 +109,33 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     size
   });
 
-    const gamePromises = [] as Promise<GameHistory>[];
-    const alphaOptions = {
-        gameRules: options.gameRules,
-        planCount: options.planCount,
-        randomize: options.randomize
-    };
-    for (let i = 0; i < options.gamesCount; i++) {
-        const gamePromise = play(
-            options.gameRules,
-            [
-                new Alpha({
-                ...alphaOptions,
-                model: options.model1
-                }),
-                new Alpha({
-                ...alphaOptions,
-                model: options.model2
-                }),
-            ],
-            `${i + 1}`
-        );
-        gamePromises.push(gamePromise);
-    }
-    if (options.switchSides) {
-        for (let i = options.gamesCount; i < options.gamesCount * 2; i++) {
-        const gamePromise = play(
-            options.gameRules,
-            [
-                new Alpha({
-                    ...alphaOptions,
-                    model: options.model2
-                }),
-                new Alpha({
-                    ...alphaOptions,
-                    model: options.model1
-                }),
-            ],
-            `${i + 1}`
-        );
-        gamePromises.push(gamePromise);
-        }
-    }
+  const gameHistories = [] as GameHistory[];
+  for (let i = 0; i < gamesCount; i++) {
+    pool.queue(async worker => {
+      const gameHistory = await worker.play();
+      gameHistories.push(gameHistory);
+    });
+  }
+  
+  const gamesStart = new Date();
+  console.log(
+    `started ${gamesCount} games at`,
+    gamesStart.toLocaleTimeString()
+  );
 
-    const gamesStart = new Date();
-    console.log(
-        `started ${gamePromises.length} games at`,
-        gamesStart.toLocaleTimeString()
-    );
-    const gameHistories = await Promise.all(gamePromises);
-    const gamesEnd = new Date();
-    console.log(
-        `ended ${gamePromises.length} games in `,
-        durationHR(gamesEnd.getTime() - gamesStart.getTime())
-    );
-    return gameHistories;
+  await pool.completed();
+  await pool.terminate();
+
+  const gamesEnd = new Date();
+  console.log(
+    `ended ${gamesCount} games in `,
+    durationHR(gamesEnd.getTime() - gamesStart.getTime())
+  );
+  return gameHistories;
 };
 
 export {
   getStates,
   play,
-  playSelfAlpha as playAlpha
+  playSelfAlpha
 };
