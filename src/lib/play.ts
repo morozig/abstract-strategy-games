@@ -1,8 +1,7 @@
-import GameRules, { Input } from '../interfaces/game-rules';
+import GameRules from '../interfaces/game-rules';
 import GameHistory from '../interfaces/game-history';
 import PolicyAgent from '../interfaces/policy-agent';
 import PolicyAction from '../interfaces/policy-action';
-import Alpha from '../agents/alpha';
 import { cpusCount, durationHR } from './helpers';
 import AlphaModel from './alpha-model';
 import {
@@ -66,14 +65,14 @@ const play = async (
 
 interface PlaySelfAlphaOptions {
   model: AlphaModel;
-  workerPath: string;
+  worker: Worker;
   gamesCount: number;
 }
 
 const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const {
     model,
-    workerPath,
+    worker,
     gamesCount,
   } = options;
 
@@ -90,18 +89,16 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   );
 
   const spawnWorker = async () => {
-    const worker = await spawn<PlayWorkerType>(
-      new Worker(workerPath)
-    );
-    worker.inputs().subscribe(async (inputBuffer) => {
+    const thread = await spawn<PlayWorkerType>(worker);
+    thread.inputs().subscribe(async (inputBuffer) => {
       const input = new Float32Array(inputBuffer as TypedInput);
       const output = await batcher.call(input);
       const outputBuffers = output.map(
         typed => typed.buffer
       );
-      worker.output(Transfer(outputBuffers, outputBuffers));
+      thread.output(Transfer(outputBuffers, outputBuffers));
     })
-    return worker;
+    return thread;
   }
 
   const pool = Pool(spawnWorker, {

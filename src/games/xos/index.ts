@@ -5,6 +5,9 @@ import GamePlayer, { GamePlayerType } from '../../interfaces/game-player';
 import GameComponent from '../../interfaces/game-component';
 import AlphaModel from '../../lib/alpha-model';
 import * as network from './networks/residual';
+import {
+  Worker
+} from 'threads';
 
 export default class Xos implements Game {
   readonly height = 5;
@@ -13,6 +16,7 @@ export default class Xos implements Game {
   readonly name: string;
   readonly title: string;
   readonly rules: Rules;
+  readonly worker: Worker;
   readonly Component: GameComponent;
   readonly players = [
     {type: GamePlayerType.Random},
@@ -30,6 +34,7 @@ export default class Xos implements Game {
     this.name = `xos${this.height}${this.width}${this.same}`;
     this.title = `${this.height},${this.width},${this.same}-game`;
     this.rules = new Rules(this.height, this.width, this.same);
+    this.worker = new Worker('./worker');
     this.Component = component(this.rules);
   }
   createModel() {

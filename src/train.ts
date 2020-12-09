@@ -12,9 +12,9 @@ import {
 
 // import GameClass from './games/four-row';
 import GameClass from './games/xos';
-import { GamePlayerType } from './interfaces/game-player';
+// import { GamePlayerType } from './interfaces/game-player';
 
-const winRate = 0.6;
+// const winRate = 0.6;
 
 const trainGeneration = async (
   game: Game,
@@ -26,10 +26,10 @@ const trainGeneration = async (
     console.log(`${modelName} trained!`);
     return;
   }
-  const rules = game.rules;
-  const planCount = game.players.find(
-    player => player.type === GamePlayerType.Alpha
-  )?.planCount || game.rules.actionsCount; 
+  // const rules = game.rules;
+  // const planCount = game.players.find(
+  //   player => player.type === GamePlayerType.Alpha
+  // )?.planCount || game.rules.actionsCount; 
   const previousGeneration = generation - 1;
   const previousModelName = `alpha-${previousGeneration}`;
   const previousModel = game.createModel();
@@ -52,7 +52,7 @@ const trainGeneration = async (
     }
   } else {
     const gameHistories = await playSelfAlpha({
-      workerPath: './games/xos/worker.ts',
+      worker: game.worker,
       model,
       gamesCount: 8
     });
