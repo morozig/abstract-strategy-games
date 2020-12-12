@@ -3,7 +3,7 @@ import { Input, Output } from '../interfaces/game-rules';
 import {
   saveModel,
   loadModel
-} from './api';
+} from '../lib/api';
 
 export type TypedInput = Float32Array;
 export type TypedOutput = [Float32Array, Float32Array];

@@ -1,8 +1,8 @@
 import { expose } from 'threads/worker';
-import PlayWorker, { PlayWorkerType } from '../../lib/play-worker';
+import createPlayWorker from '../../lib/play-worker';
 import Rules from './rules';
 
 const rules = new Rules(5, 5, 4);
-const worker = new PlayWorker(rules);
+const worker = createPlayWorker(rules);
 
-expose(worker as PlayWorkerType);
+expose(worker);

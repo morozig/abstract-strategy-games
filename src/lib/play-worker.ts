@@ -2,10 +2,8 @@ import {
   Observable,
   Subject
 } from 'threads/observable';
-import GameRules, { Input, Output } from '../interfaces/game-rules';
+import GameRules from '../interfaces/game-rules';
 import GameHistory from '../interfaces/game-history';
-import PolicyAgent from '../interfaces/policy-agent';
-import PolicyAction from '../interfaces/policy-action';
 import { TransferDescriptor } from 'threads';
 import { play } from '../lib/play';
 import Mcts from '../agents/mcts';
@@ -19,25 +17,19 @@ export type PlayWorkerType = {
 };
 
 type PredictResolver = (outputBuffers: ArrayBuffer[]) => void;
-export default class PlayWorker implements PlayWorkerType
+const createPlayWorker = (gameRules: GameRules, planCount = 300) =>
 {
-  private gameRules: GameRules;
-  private planCount: number;
-  private inputsSubject = new Subject<
+  const inputsSubject = new Subject<
     ArrayBuffer | TransferDescriptor<ArrayBuffer>
   >();
-  private queue = [] as PredictResolver[];
-  constructor(gameRules: GameRules, planCount?: number) {
-    this.gameRules = gameRules;
-    this.planCount = planCount || 300;
-  }
-  private async predict(history: number[]) {
-    const input = this.gameRules.getInput(history);
+  const queue = [] as PredictResolver[];
+  const predict = async (history: number[]) => {
+    const input = gameRules.getInput(history);
     const typedInput = new Float32Array(input.flat(2));
-    this.inputsSubject.next(typedInput.buffer);
+    inputsSubject.next(typedInput.buffer);
     const [ policyBuffer, valueBuffer ] = await new Promise(
       (resolve: PredictResolver) => {
-        this.queue.push(resolve);
+        queue.push(resolve);
       }
     );
     const policy = [] as number[];
@@ -53,27 +45,31 @@ export default class PlayWorker implements PlayWorkerType
     }
   }
 
-  inputs() {
-    return Observable.from(this.inputsSubject)
-  }
-  output(
-    outputBuffers: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
-  ) {
-    const resolve = this.queue.shift();
-    if (resolve) {
-      resolve(outputBuffers as ArrayBuffer[]);
+  return {
+    inputs() {
+      return Observable.from(inputsSubject)
+    },
+    output(
+      outputBuffers: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
+    ) {
+      const resolve = queue.shift();
+      if (resolve) {
+        resolve(outputBuffers as ArrayBuffer[]);
+      }
+    },
+    play() {
+      const agent = new Mcts({
+        gameRules: gameRules,
+        planCount: planCount,
+        predict: (history: number[]) => predict(history),
+        randomize: true
+      });
+      return play(
+        gameRules,
+        [ agent, agent ]
+      );
     }
-  }
-  play() {
-    const agent = new Mcts({
-      gameRules: this.gameRules,
-      planCount: this.planCount,
-      predict: (history: number[]) => this.predict(history),
-      randomize: true
-    });
-    return play(
-      this.gameRules,
-      [ agent, agent ]
-    );
-  }
+  } as PlayWorkerType;
 };
+
+export default createPlayWorker;
