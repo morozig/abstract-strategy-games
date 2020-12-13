@@ -133,8 +133,8 @@ export default class AlphaNetwork {
 
       const outputs = (inputs as TypedInput[]).map(
         (_, i) => [
-          policies.subarray(i * policySize, (i + 1) * policySize),
-          rewards.subarray(i * rewardSize, (i + 1) * rewardSize),
+          policies.slice(i * policySize, (i + 1) * policySize),
+          rewards.slice(i * rewardSize, (i + 1) * rewardSize),
         ] as TypedOutput
       );
       return outputs;

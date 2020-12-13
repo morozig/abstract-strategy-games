@@ -58,15 +58,23 @@ const createPlayWorker = (gameRules: GameRules, planCount = 300) =>
       }
     },
     play() {
-      const agent = new Mcts({
-        gameRules: gameRules,
-        planCount: planCount,
-        predict: (history: number[]) => predict(history),
-        randomize: true
-      });
       return play(
         gameRules,
-        [ agent, agent ]
+        [
+          new Mcts({
+            gameRules: gameRules,
+            planCount: planCount,
+            predict: (history: number[]) => predict(history),
+            randomize: true
+          }),
+          new Mcts({
+            gameRules: gameRules,
+            planCount: planCount,
+            predict: (history: number[]) => predict(history),
+            randomize: true
+          }),
+        ],
+        new Date().getTime().toString()
       );
     }
   } as PlayWorkerType;

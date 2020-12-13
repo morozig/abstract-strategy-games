@@ -78,7 +78,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
 
   const size = await cpusCount();
   const concurrency = Math.min(
-    Math.floor(options.gamesCount / size),
+    Math.floor(options.gamesCount / size) || 1,
     100
   );
 
