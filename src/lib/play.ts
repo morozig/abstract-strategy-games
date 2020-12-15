@@ -76,7 +76,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     gamesCount,
   } = options;
 
-  const size = await cpusCount();
+  const size = await cpusCount() - 1 || 1;
   const concurrency = Math.min(
     Math.floor(options.gamesCount / size) || 1,
     100
@@ -85,7 +85,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const batcher = new Batcher(
     (inputs: TypedInput[]) => model.predictBatch(inputs),
     size * concurrency,
-    10
+    5
   );
 
   const spawnWorker = async () => {
