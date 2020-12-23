@@ -95,7 +95,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     return batchOutputs;
   };
   const batcher = new Batcher(
-    predictBatches,
+    (batches: TypedInput[][]) => predictBatches(batches),
     size,
     10
   );

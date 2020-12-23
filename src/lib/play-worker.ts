@@ -64,11 +64,11 @@ const createPlayWorker = (
     return predictions;
   };
   const batcher = new Batcher(
-    predictBatch,
+    (histories: number[][]) => predictBatch(histories),
     concurrency,
     10
   );
-  const predict = batcher.call;
+  const predict = (history: number[]) => batcher.call(history);
 
   return {
     inputs() {
@@ -93,13 +93,13 @@ const createPlayWorker = (
           new Mcts({
             gameRules: gameRules,
             planCount: planCount,
-            predict,
+            predict: (history: number[]) => predict(history),
             randomize: true
           }),
           new Mcts({
             gameRules: gameRules,
             planCount: planCount,
-            predict,
+            predict: (history: number[]) => predict(history),
             randomize: true
           }),
         ],
