@@ -76,27 +76,47 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     gamesCount,
   } = options;
 
-  const size = await cpusCount() - 1 || 1;
-  const concurrency = Math.min(
-    Math.floor(options.gamesCount / size) || 1,
-    100
-  );
+  const size = 1;
+  // const size = await cpusCount();
+  console.log(await cpusCount());
+  const concurrency = 100;
 
+  const predictBatches = async (batches: TypedInput[][]) => {
+    const batchIndices = batches.reduce(
+      (indices, current) => indices.concat(current.length),
+      [0]
+    );
+    batchIndices.pop();
+
+    const outputs = await model.predictBatch(batches.flat());
+    const batchOutputs = batchIndices.map(
+      (batchIndex, i, arr) => outputs.slice(batchIndex, arr[i + 1])
+    );
+    return batchOutputs;
+  };
   const batcher = new Batcher(
-    (inputs: TypedInput[]) => model.predictBatch(inputs),
-    size * concurrency,
-    5
+    predictBatches,
+    size,
+    10
   );
 
   const spawnWorker = async () => {
     const thread = await spawn<PlayWorkerType>(worker);
-    thread.inputs().subscribe(async (inputBuffer) => {
-      const input = new Float32Array(inputBuffer as TypedInput);
-      const output = await batcher.call(input);
-      const outputBuffers = output.map(
-        typed => typed.buffer
+    thread.inputs().subscribe(async (inputBuffers) => {
+      const inputs = (inputBuffers as ArrayBuffer[]).map(
+        inputBuffer => new Float32Array(inputBuffer)
       );
-      thread.output(Transfer(outputBuffers, outputBuffers));
+      const outputs = await batcher.call(inputs);
+      const policyBuffers = outputs.map(
+        output => output[0].buffer
+      );
+      const rewardBuffers = outputs.map(
+        output => output[1].buffer
+      );
+      thread.setOutputs(
+        Transfer(policyBuffers, policyBuffers),
+        Transfer(rewardBuffers, rewardBuffers)
+      );
     })
     return thread;
   }
@@ -109,7 +129,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const gameHistories = [] as GameHistory[];
   for (let i = 0; i < gamesCount; i++) {
     pool.queue(async worker => {
-      const gameHistory = await worker.play();
+      const gameHistory = await worker.play(`${i}`);
       gameHistories.push(gameHistory);
     });
   }
