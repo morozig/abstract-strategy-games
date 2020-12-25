@@ -9,6 +9,7 @@ import { play } from '../lib/play';
 import Mcts from '../agents/mcts';
 import GamePrediction from '../interfaces/game-prediction';
 import Batcher from './batcher';
+import { sleep } from './helpers';
 
 export type PlayWorkerType = {
   play: (gameName?: string) => Promise<GameHistory>;
@@ -28,7 +29,6 @@ type PredictBatchResolver = (
 
 const createPlayWorker = (
   gameRules: GameRules,
-  concurrency = 100,
   planCount = 300
 ) => {
   const inputsSubject = new Subject<
@@ -65,7 +65,7 @@ const createPlayWorker = (
   };
   const batcher = new Batcher(
     (histories: number[][]) => predictBatch(histories),
-    concurrency,
+    0,
     10
   );
   const predict = (history: number[]) => batcher.call(history);
@@ -90,8 +90,10 @@ const createPlayWorker = (
         ]);
       }
     },
-    play(gameName?: string) {
-      return play(
+    async play(gameName?: string) {
+      batcher.setSize(size => size + 1);
+      await sleep(10);
+      const gameHistory = await play(
         gameRules,
         [
           new Mcts({
@@ -109,6 +111,8 @@ const createPlayWorker = (
         ],
         gameName
       );
+      batcher.setSize(size => size - 1);
+      return gameHistory;
     }
   } as PlayWorkerType;
 };

@@ -3,6 +3,7 @@ interface Item<I,O> {
   input: I;
   resolve: (output: O) => void;
 }
+export type SizeUpdater = (currentSize: number) => number;
 
 export default class Batcher<I,O> {
   private func: BatchFunc<I,O>;
@@ -51,5 +52,14 @@ export default class Batcher<I,O> {
       };
       this.add(item);
     });
+  }
+  setSize(size: number): void;
+  setSize(updater: SizeUpdater): void;
+  setSize(param: number | SizeUpdater) {
+    if (typeof param === 'number') {
+      this.size = param;
+    } else {
+      this.size = param(this.size);
+    }
   }
 };

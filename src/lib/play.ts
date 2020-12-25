@@ -76,10 +76,12 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     gamesCount,
   } = options;
 
-  const size = 3;
-  // const size = await cpusCount();
-  console.log(await cpusCount());
-  const concurrency = 100;
+  // const size = 3;
+  const size = await cpusCount();
+  // console.log(await cpusCount());
+  const concurrency = Math.ceil(gamesCount / size);
+
+  console.log('size', size, 'concurrency', concurrency);
 
   const predictBatches = async (batches: TypedInput[][]) => {
     const batchIndices = batches.reduce(
