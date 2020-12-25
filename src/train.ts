@@ -52,9 +52,9 @@ const trainGeneration = async (
     }
   } else {
     const gameHistories = await playSelfAlpha({
-      worker: game.worker,
+      createWorker: () => game.createWorker(),
       model,
-      gamesCount: 100
+      gamesCount: 300
     });
 
     for (let gameHistory of gameHistories) {

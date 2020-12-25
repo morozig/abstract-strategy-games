@@ -10,6 +10,6 @@ export default interface Game {
     readonly rules: GameRules;
     readonly Component: GameComponent;
     readonly players: GamePlayer[];
-    readonly worker: Worker;
+    createWorker(): Worker;
     createModel(): AlphaModel;
 };

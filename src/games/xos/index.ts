@@ -16,7 +16,6 @@ export default class Xos implements Game {
   readonly name: string;
   readonly title: string;
   readonly rules: Rules;
-  readonly worker: Worker;
   readonly Component: GameComponent;
   readonly players = [
     {type: GamePlayerType.Random},
@@ -34,8 +33,10 @@ export default class Xos implements Game {
     this.name = `xos${this.height}${this.width}${this.same}`;
     this.title = `${this.height},${this.width},${this.same}-game`;
     this.rules = new Rules(this.height, this.width, this.same);
-    this.worker = new Worker('./worker');
     this.Component = component(this.rules);
+  }
+  createWorker() {
+    return new Worker('./worker');;
   }
   createModel() {
     const {

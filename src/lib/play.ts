@@ -51,7 +51,7 @@ const play = async (
       }
     }
     history.push(policyAction);
-    console.log(`${name}:${i}`, gameState, policyAction.action);
+    // console.log(`${name}:${i}`, gameState, policyAction.action);
     gameState = gameStepResult.state;
     isDone = gameStepResult.done;
     rewards = gameStepResult.rewards;
@@ -65,25 +65,27 @@ const play = async (
 
 interface PlaySelfAlphaOptions {
   model: AlphaModel;
-  worker: Worker;
+  createWorker: () => Worker;
   gamesCount: number;
 }
 
 const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const {
     model,
-    worker,
+    createWorker,
     gamesCount,
   } = options;
 
-  const size = 1;
+  const size = 3;
   // const size = await cpusCount();
   console.log(await cpusCount());
   const concurrency = 100;
 
   const predictBatches = async (batches: TypedInput[][]) => {
     const batchIndices = batches.reduce(
-      (indices, current) => indices.concat(current.length),
+      (indices, current) => indices.concat(
+        indices[indices.length - 1] + current.length
+      ),
       [0]
     );
     batchIndices.pop();
@@ -97,11 +99,11 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const batcher = new Batcher(
     (batches: TypedInput[][]) => predictBatches(batches),
     size,
-    10
+    50
   );
 
   const spawnWorker = async () => {
-    const thread = await spawn<PlayWorkerType>(worker);
+    const thread = await spawn<PlayWorkerType>(createWorker());
     thread.inputs().subscribe(async (inputBuffers) => {
       const inputs = (inputBuffers as ArrayBuffer[]).map(
         inputBuffer => new Float32Array(inputBuffer)
