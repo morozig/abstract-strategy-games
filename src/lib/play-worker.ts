@@ -81,9 +81,13 @@ const createPlayWorker = (
       const resolve = queue.shift();
       if (resolve) {
         resolve([
-          policyBuffers,
-          rewardBuffers
-        ] as [ArrayBuffer[], ArrayBuffer[]]);
+          ('send' in policyBuffers) ?
+            policyBuffers.send :
+            policyBuffers,
+          ('send' in rewardBuffers) ?
+            rewardBuffers.send :
+            rewardBuffers
+        ]);
       }
     },
     play(gameName?: string) {

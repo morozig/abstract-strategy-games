@@ -105,7 +105,10 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const spawnWorker = async () => {
     const thread = await spawn<PlayWorkerType>(createWorker());
     thread.inputs().subscribe(async (inputBuffers) => {
-      const inputs = (inputBuffers as ArrayBuffer[]).map(
+      const inputs = ('send' in inputBuffers ?
+          inputBuffers.send :
+          inputBuffers
+        ).map(
         inputBuffer => new Float32Array(inputBuffer)
       );
       const outputs = await batcher.call(inputs);

@@ -36,7 +36,9 @@ export default class Xos implements Game {
     this.Component = component(this.rules);
   }
   createWorker() {
-    return new Worker('./worker');;
+    return new Worker('./worker', {
+      name: 'xos'
+    });
   }
   createModel() {
     const {
