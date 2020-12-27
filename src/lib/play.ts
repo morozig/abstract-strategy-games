@@ -2,7 +2,7 @@ import GameRules from '../interfaces/game-rules';
 import GameHistory from '../interfaces/game-history';
 import PolicyAgent from '../interfaces/policy-agent';
 import PolicyAction from '../interfaces/policy-action';
-import { cpusCount, durationHR } from './helpers';
+import { cpusCount } from './helpers';
 import AlphaModel from './alpha-model';
 import {
   spawn,
@@ -13,6 +13,7 @@ import {
 import { PlayWorkerType } from './play-worker';
 import Batcher from './batcher';
 import { TypedInput } from './alpha-network';
+import ProgressBar from './progress-bar';
 
 const getStates = (history: number[], rules: GameRules) => {
   const initial = rules.init();
@@ -56,10 +57,10 @@ const play = async (
     isDone = gameStepResult.done;
     rewards = gameStepResult.rewards;
   }
-  console.log(
-    `game ${name} finished in ${history.length} moves`,
-    rewards
-  );
+  // console.log(
+  //   `game ${name} finished in ${history.length} moves`,
+  //   rewards
+  // );
   return { rewards, history } as GameHistory;
 };
 
@@ -67,6 +68,8 @@ interface PlaySelfAlphaOptions {
   model: AlphaModel;
   createWorker: () => Worker;
   gamesCount: number;
+  averageTurns: number;
+  planCount: number;
 }
 
 const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
@@ -74,6 +77,8 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     model,
     createWorker,
     gamesCount,
+    averageTurns,
+    planCount
   } = options;
 
   // const size = 3;
@@ -82,6 +87,22 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const concurrency = Math.ceil(gamesCount / size);
 
   console.log('size', size, 'concurrency', concurrency);
+
+  const progressBar = new ProgressBar(
+    ''.concat(
+      '[:bar] :percent | ETA: :eta | ',
+      ':gamesComplete/:gamesCount games | ',
+      'speed :speed | :elapsed',
+    ),
+    {
+      total: gamesCount * averageTurns * planCount,
+      tokens: {
+        gamesComplete: 0,
+        gamesCount,
+        speed: 'N/A'
+      }
+    }
+  );
 
   const predictBatches = async (batches: TypedInput[][]) => {
     const batchIndices = batches.reduce(
@@ -92,7 +113,14 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     );
     batchIndices.pop();
 
+    const startTime = new Date().getTime();
     const outputs = await model.predictBatch(batches.flat());
+    const endTime = new Date().getTime();
+    const speed = `${((endTime - startTime) / outputs.length).toFixed(2)} ms`;
+    progressBar.update(
+      curr => curr + outputs.length,
+      tokens => ({speed})
+    );
     const batchOutputs = batchIndices.map(
       (batchIndex, i, arr) => outputs.slice(batchIndex, arr[i + 1])
     );
@@ -137,24 +165,34 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   for (let i = 0; i < gamesCount; i++) {
     pool.queue(async worker => {
       const gameHistory = await worker.play(`${i}`);
+      const turnsDelta = averageTurns - gameHistory.history.length;
+      progressBar.update(
+        curr => curr + turnsDelta * planCount,
+        tokens => ({
+          gamesComplete: tokens.gamesComplete + 1
+        })
+      ); 
       gameHistories.push(gameHistory);
     });
   }
   
-  const gamesStart = new Date();
-  console.log(
-    `started ${gamesCount} games at`,
-    gamesStart.toLocaleTimeString()
-  );
+  // const gamesStart = new Date();
+  // console.log(
+  //   `started ${gamesCount} games at`,
+  //   gamesStart.toLocaleTimeString()
+  // );
+  progressBar.start();
 
   await pool.completed();
   await pool.terminate();
 
-  const gamesEnd = new Date();
-  console.log(
-    `ended ${gamesCount} games in `,
-    durationHR(gamesEnd.getTime() - gamesStart.getTime())
-  );
+  // const gamesEnd = new Date();
+  // console.log(
+  //   `ended ${gamesCount} games in `,
+  //   durationHR(gamesEnd.getTime() - gamesStart.getTime())
+  // );
+  progressBar.update(gamesCount * averageTurns * planCount);
+  progressBar.stop();
   return gameHistories;
 };
 

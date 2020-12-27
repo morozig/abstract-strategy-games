@@ -37,7 +37,7 @@ const randomOf = <T>(items: T[]) => {
   return items[index];
 };
 
-const sleep = (ms: number) => new Promise(
+const sleep = (ms: number) => new Promise<void>(
   (resolve: () => void) => setTimeout(resolve, ms)
 );
 
