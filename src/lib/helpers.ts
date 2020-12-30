@@ -27,7 +27,7 @@ const chooseIndex = (probs: number[]) => {
   return index;
 }
 
-const indexSoftMax = (numbers: number[], temp: number) => {
+const indexSoftMax = (numbers: number[], temp?: number) => {
   const softMaxed = softMax(numbers, temp);
   return chooseIndex(softMaxed);
 };
@@ -78,6 +78,12 @@ const cpusCount = async () => {
   }
 };
 
+const oneHot = (action: number, actionsCount: number) => {
+  const policy = new Array(actionsCount).fill(0);
+  policy[action - 1] = 1;
+  return policy;
+};
+
 export {
   indexMax,
   softMax,
@@ -85,5 +91,6 @@ export {
   indexSoftMax,
   sleep,
   durationHR,
-  cpusCount
+  cpusCount,
+  oneHot
 };

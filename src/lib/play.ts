@@ -1,7 +1,7 @@
 import GameRules from '../interfaces/game-rules';
 import GameHistory from '../interfaces/game-history';
-import PolicyAgent from '../interfaces/policy-agent';
-import PolicyAction from '../interfaces/policy-action';
+import HistoryAgent from '../interfaces/history-agent';
+import HistoryAction from '../interfaces/history-action';
 import { cpusCount } from './helpers';
 import AlphaModel from './alpha-model';
 import {
@@ -29,7 +29,7 @@ const getStates = (history: number[], rules: GameRules) => {
 
 const play = async (
   gameRules: GameRules,
-  agents: PolicyAgent[],
+  agents: HistoryAgent[],
   name = ''
 ) => {
   let gameState = gameRules.init();
@@ -38,21 +38,21 @@ const play = async (
   }
   let isDone = false;
   let rewards = [] as number[];
-  const history = [] as PolicyAction[];
+  const history = [] as HistoryAction[];
   for(let i = 1; !isDone; i++) {
-    const policyAction = await agents[gameState.playerIndex].policyAct();
+    const historyAction = await agents[gameState.playerIndex].historyAct();
     const gameStepResult = gameRules.step(
-      gameState, policyAction.action
+      gameState, historyAction.action
     );
     for (let i in agents) {
       const agent = agents[i];
       const index = +i;
       if (index !== gameState.playerIndex) {
-        agent.step(policyAction.action);
+        agent.step(historyAction.action);
       }
     }
-    history.push(policyAction);
-    // console.log(`${name}:${i}`, gameState, policyAction.action);
+    history.push(historyAction);
+    // console.log(`${name}:${i}`, gameState, historyAction.action);
     gameState = gameStepResult.state;
     isDone = gameStepResult.done;
     rewards = gameStepResult.rewards;

@@ -5,9 +5,7 @@ import Rules from './rules';
 // import Network from './general';
 import Network from './residual';
 import Batcher from '../../lib/batcher';
-import config from '../../config';
-import PolicyAction from '../../interfaces/policy-action';
-import { softMax } from '../../lib/helpers';
+import { oneHot, softMax } from '../../lib/helpers';
 
 // import { indexMax } from '../../lib/helpers';
 
@@ -90,16 +88,6 @@ const getInput = (states: State[]) => {
     };
 };
 
-const getSymHistories = (history: PolicyAction[]) => {
-    const symHistories = [history];
-    symHistories.push(history.map(({ action, policy, value }) => ({
-        action: 8 - action,
-        policy: policy.slice().reverse(),
-        value
-    })));
-    return symHistories;
-};
-
 const getStates = (history: number[], rules: Rules) => {
     const initial = rules.init();
     const states = [initial];
@@ -112,9 +100,8 @@ const getStates = (history: number[], rules: Rules) => {
     return states;
 };
 
-const getOutput = (reward: number, policy: number[]) => {
-    // const policyOutput = policy;
-    const policyOutput = softMax(policy, 0.2);
+const getOutput = (reward: number, best: number) => {
+    const policyOutput = oneHot(best, 7);
     const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };
@@ -152,9 +139,9 @@ export default class Model {
         const outputs = [] as Output[];
         const pairs = [] as Pair[];
         for (let gameHistory of gameHistories) {
-            const symHistories = getSymHistories(gameHistory.history);
-            for (let policyActions of symHistories) {
-                const history = policyActions.map(({action}) => action);
+            const symHistories = [gameHistory.history];
+            for (let historyActions of symHistories) {
+                const history = historyActions.map(({action}) => action);
                 const states = getStates(history, this.rules);
                 states.pop();
                 for (let i = 0; i < states.length; i++) {
@@ -163,8 +150,8 @@ export default class Model {
                     const lastState = states[i];
                     const lastPlayerIndex = lastState.playerIndex;
                     const reward = gameHistory.rewards[lastPlayerIndex];
-                    const { policy } = gameHistory.history[i];
-                    const output = getOutput(reward, policy);
+                    const { best } = gameHistory.history[i];
+                    const output = getOutput(reward, best);
                     pairs.push({
                         input,
                         output

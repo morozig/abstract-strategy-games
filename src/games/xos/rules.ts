@@ -10,9 +10,9 @@ import {
 } from './board';
 import { getWinner2D } from '../../lib/xos';
 import { getStates } from '../../lib/play';
-import PolicyAction from '../../interfaces/policy-action';
+import HistoryAction from '../../interfaces/history-action';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
-import { softMax } from '../../lib/helpers';
+import { oneHot } from '../../lib/helpers';
 import GameHistory from '../../interfaces/game-history';
 
 const historyDepth = 2;
@@ -156,7 +156,7 @@ export default class Rules implements GameRules {
     }
     return input;
   }
-  private getSymHistories(history: PolicyAction[]) {
+  private getSymHistories(history: HistoryAction[]) {
     const symHistories = [history];
     const syms = [
       PlaneSymmetry.Horizontal,
@@ -172,7 +172,7 @@ export default class Rules implements GameRules {
     );
 
     for (let sym of syms) {
-      const symHistory = history.map(({ action, policy, value }) => {
+      const symHistory = history.map(({ action, best, value }) => {
         const actionPosition = this.actionToIJ(action);
         const symPosition = plane({
           i: actionPosition.i,
@@ -182,49 +182,45 @@ export default class Rules implements GameRules {
           sym
         });
         const symAction = this.positionToAction(symPosition);
-        const symPolicy = policy.map((_, index) => {
-          const position = this.actionToIJ(index + 1);
-          const symPosition = plane({
-            i: position.i,
-            j: position.j,
-            height: this.height,
-            width: this.width,
-            sym
-          });
-          const symIndex = this.positionToAction(
-            symPosition
-          ) - 1;
-          const symValue = policy[symIndex];
-          return symValue;
+        const bestPosition = this.actionToIJ(best);
+        const symBestPosition = plane({
+          i: bestPosition.i,
+          j: bestPosition.j,
+          height: this.height,
+          width: this.width,
+          sym
         });
+
+        const symBest = this.positionToAction(symBestPosition);
+
         return {
           action: symAction,
-          policy: symPolicy,
+          best: symBest,
           value
-        } as PolicyAction
+        } as HistoryAction
       });
       symHistories.push(symHistory);
     }
     return symHistories;
   }
   private getOutput(gameHistory: GameHistory) {
-    const lastPolicyAction = gameHistory.history[
+    const lastHistoryAction = gameHistory.history[
       gameHistory.history.length - 1
     ];
-    const policyOutput = softMax(lastPolicyAction.policy, 0);
-    const rewardOutput = lastPolicyAction.value;
+    const policyOutput = oneHot(lastHistoryAction.best, this.actionsCount);
+    const rewardOutput = lastHistoryAction.value;
     return [policyOutput, rewardOutput] as Output;
   }
   getPairs(gameHistory: GameHistory) {
     const pairs = [] as Pair[];
     const symHistories = this.getSymHistories(gameHistory.history);
-    for (let policyActions of symHistories) {
-      for (let i = 1; i <= policyActions.length; i++) {
-        const subPolicyActions = policyActions.slice(0, i);
-        const subHistory = subPolicyActions.map(({action}) => action);
+    for (let historyActions of symHistories) {
+      for (let i = 1; i <= historyActions.length; i++) {
+        const subHistoryActions = historyActions.slice(0, i);
+        const subHistory = subHistoryActions.map(({action}) => action);
         const input = this.getInput(subHistory);
         const output = this.getOutput({
-          history: subPolicyActions,
+          history: subHistoryActions,
           rewards: gameHistory.rewards
         });
         pairs.push({

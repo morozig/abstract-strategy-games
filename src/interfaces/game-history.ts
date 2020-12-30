@@ -1,6 +1,6 @@
-import PolicyAction from './policy-action';
+import HistoryAction from './history-action';
 
 export default interface GameHistory {
-  readonly history: PolicyAction[];
+  readonly history: HistoryAction[];
   readonly rewards: number[];
 };
