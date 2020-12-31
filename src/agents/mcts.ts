@@ -1,6 +1,10 @@
 import GameRules from '../interfaces/game-rules';
 import GamePrediction from '../interfaces/game-prediction';
-import { randomOf, indexMax, indexSoftMax } from '../lib/helpers';
+import {
+  randomOf,
+  indexMax,
+  chooseIndex
+} from '../lib/helpers';
 import StepResult from '../interfaces/game-step-result';
 import HistoryAgent from '../interfaces/history-agent';
 
@@ -166,16 +170,18 @@ export default class Mcts implements HistoryAgent{
     const probs = this.root.children.map(
       child => child.visits / this.root.visits
     );
-    const temp = this.randomize ? 1 : 0;
-    const index = indexSoftMax(probs, temp);
+    const index = this.randomize ?
+      chooseIndex(probs) :
+      indexMax(probs);
     const bestIndex = this.randomize ? indexMax(probs) : index;
     const action = this.root.children[index].action;
     const best = this.root.children[bestIndex].action;
+    const value = this.root.meanValue;
     this.step(action);
     return {
       action,
       best,
-      value: this.root.meanValue
+      value
     };
   }
   step(action: number) {
@@ -224,8 +230,12 @@ export default class Mcts implements HistoryAgent{
     const availables = this.gameRules.availables(
       node.stepResult.state
     );
+    const totalProb = availables.reduce(
+      (total, current) => total + policy[current - 1],
+      0
+    );
     for (let action of availables) {
-      const prob = policy[action - 1];
+      const prob = policy[action - 1] / totalProb;
       const stepResult = this.gameRules.step(
         node.stepResult.state,
         action

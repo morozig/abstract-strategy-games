@@ -92,5 +92,6 @@ export {
   sleep,
   durationHR,
   cpusCount,
-  oneHot
+  oneHot,
+  chooseIndex
 };
