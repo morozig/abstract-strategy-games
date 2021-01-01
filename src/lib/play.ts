@@ -95,7 +95,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
       'speed :speed | :elapsed',
     ),
     {
-      total: gamesCount * averageTurns * planCount,
+      total: gamesCount * averageTurns * planCount * 0.9,
       tokens: {
         gamesComplete: 0,
         gamesCount,
@@ -165,7 +165,10 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   for (let i = 0; i < gamesCount; i++) {
     pool.queue(async worker => {
       const gameHistory = await worker.play(`${i}`);
-      const turnsDelta = averageTurns - gameHistory.history.length;
+      const turnsDelta = Math.max(
+        averageTurns - gameHistory.history.length,
+        0
+      );
       progressBar.update(
         curr => curr + turnsDelta * planCount,
         tokens => ({
@@ -191,7 +194,7 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   //   `ended ${gamesCount} games in `,
   //   durationHR(gamesEnd.getTime() - gamesStart.getTime())
   // );
-  progressBar.update(gamesCount * averageTurns * planCount);
+  progressBar.update(gamesCount * averageTurns * planCount * 0.9);
   progressBar.stop();
   return gameHistories;
 };
