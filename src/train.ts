@@ -67,8 +67,11 @@ const trainGeneration = async (
   }
 
   // console.log(modelHistories);
-  await model.train(modelHistories);
+  const loss = await model.train(modelHistories);
 
+  if (loss < 1) {
+    await model.save(modelName);
+  }
   return false;
 
   // const gamesCount = 25;

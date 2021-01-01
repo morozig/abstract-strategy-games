@@ -82,7 +82,7 @@ export default class AlphaNetwork {
     policiesTensor.dispose();
     rewardsTensor.dispose();
     console.log(trainingHistory);
-    const loss = trainingHistory.history.loss[
+    const loss = trainingHistory.history.val_loss[
       this.epochs - 1
     ] as number;
     return loss;

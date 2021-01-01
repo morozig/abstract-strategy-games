@@ -8,8 +8,8 @@ import {
 const numFilters = 128;
 const numLayers = 5;
 const batchSize = 64;
-const epochs = 10;
-const learningRate = 0.001;
+const epochs = 30;
+const learningRate = 0.01;
 const dropout = 0.3;
 
 interface LayersModelOptions {
@@ -36,26 +36,35 @@ const createModel = (options: LayersModelOptions) => {
 
   let policy = convLayer2D(network, {
     name: 'policyConv',
-    numFilters: 1,
+    numFilters: 2,
     kernelSize: 1,
     padding: 'same'
-  });
+  })
 
   policy = tf.layers.flatten(
   ).apply(policy) as tf.SymbolicTensor;
 
-  policy = tf.layers.softmax(
-  ).apply(policy) as tf.SymbolicTensor;
+  policy = denseLayer(policy, {
+    name: 'policyDense',
+    units: numFilters * 2,
+    dropout
+  });
 
+  policy = denseLayer(policy, {
+    name: 'policyDenseHead',
+    units: height * width,
+    dropout
+  });
+
+  policy = tf.layers.softmax({
+    name: 'policy'
+  }).apply(policy) as tf.SymbolicTensor;
 
   let reward = convLayer2D(network, {
     name: 'rewardConv',
-    numFilters,
-    kernelSize: [
-      height,
-      width
-    ],
-    padding: 'valid'
+    numFilters: 1,
+    kernelSize: 1,
+    padding: 'same'
   });
 
   reward = tf.layers.flatten(
@@ -63,12 +72,19 @@ const createModel = (options: LayersModelOptions) => {
 
   reward = denseLayer(reward, {
     name: 'rewardDense',
+    units: numFilters,
+    dropout
+  });
+
+  reward = denseLayer(reward, {
+    name: 'rewardDenseHead',
     units: 1,
     dropout
   });
 
   reward = tf.layers.activation({
-    activation: 'tanh'
+    activation: 'tanh',
+    name: 'reward'
   }).apply(reward) as tf.SymbolicTensor;
 
   const model = tf.model(
