@@ -58,6 +58,9 @@ const createModel = (options: LayersModelOptions) => {
     padding: 'valid'
   });
 
+  reward = tf.layers.flatten(
+  ).apply(reward) as tf.SymbolicTensor;
+
   reward = denseLayer(reward, {
     name: 'rewardDense',
     units: 1,

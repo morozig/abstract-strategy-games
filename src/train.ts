@@ -54,7 +54,7 @@ const trainGeneration = async (
     const gameHistories = await playSelfAlpha({
       createWorker: () => game.createWorker(),
       model,
-      gamesCount: 300,
+      gamesCount: 1000,
       averageTurns: 20,
       planCount: 300
     });
@@ -66,10 +66,10 @@ const trainGeneration = async (
     await saveHistory(game.name, modelName, modelHistories);
   }
 
-  return false;
+  // console.log(modelHistories);
+  await model.train(modelHistories);
 
-  // // console.log(modelHistories);
-  // await model.train(modelHistories);
+  return false;
 
   // const gamesCount = 25;
   // const contest = await playAlpha({
