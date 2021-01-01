@@ -24,7 +24,9 @@ const chooseIndex = (probs: number[]) => {
     }
     index += 1;
   }
-  return index;
+  return index < probs.length ?
+    index :
+    probs.length - 1;
 }
 
 const indexSoftMax = (numbers: number[], temp?: number) => {
