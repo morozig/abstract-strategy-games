@@ -167,9 +167,13 @@ export default class Mcts implements HistoryAgent{
     for (let i = 0; i < this.gameRules.actionsCount; i++) {
       policy.push(0);
     }
-    const probs = this.root.children.map(
-      child => child.visits / this.root.visits
-    );
+    const probs = this.root.visits > 1 ?
+      this.root.children.map(
+        child => child.visits / (this.root.visits - 1)
+      ) :
+      this.root.children.map(
+        child => child.prob
+      )
     const index = this.randomize ?
       chooseIndex(probs) :
       indexMax(probs);
