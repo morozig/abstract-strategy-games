@@ -6,7 +6,7 @@ import {
   chooseIndex
 } from '../lib/helpers';
 import StepResult from '../interfaces/game-step-result';
-import HistoryAgent from '../interfaces/history-agent';
+import PolicyAgent from '../interfaces/policy-agent';
 
 const bonusScale = 5;
 // const randomizeTemp = 0.1;
@@ -131,7 +131,7 @@ class Node {
   }
 };
 
-export default class Mcts implements HistoryAgent{
+export default class Mcts implements PolicyAgent{
   private gameRules: GameRules;
   private predict: Predictor;
   private planCount: number;
@@ -158,15 +158,13 @@ export default class Mcts implements HistoryAgent{
     this.rootHistory = [];
   }
   async act() {
-    const { action } = await this.historyAct();
+    const { action } = await this.policyAct();
     return action;
   }
-  async historyAct() {
+  async policyAct() {
     await this.plan();
-    const policy = [] as number[];
-    for (let i = 0; i < this.gameRules.actionsCount; i++) {
-      policy.push(0);
-    }
+    const policy = Array<number>(this.gameRules.actionsCount)
+      .fill(0);
     const probs = this.root.visits > 1 ?
       this.root.children.map(
         child => child.visits / (this.root.visits - 1)
@@ -177,14 +175,17 @@ export default class Mcts implements HistoryAgent{
     const index = this.randomize ?
       chooseIndex(probs) :
       indexMax(probs);
-    const bestIndex = this.randomize ? indexMax(probs) : index;
     const action = this.root.children[index].action;
-    const best = this.root.children[bestIndex].action;
+    for (let i = 0; i < this.root.children.length; i++) {
+      const action = this.root.children[i].action;
+      const prob = probs[i];
+      policy[action - 1] = prob;
+    }
     const value = this.root.meanValue;
     this.step(action);
     return {
       action,
-      best,
+      policy,
       value
     };
   }

@@ -1,4 +1,4 @@
-import HistoryAgent from '../interfaces/history-agent';
+import PolicyAgent from '../interfaces/policy-agent';
 import GameRules from '../interfaces/game-rules';
 import Mcts from './mcts';
 import AlphaModel from '../lib/alpha-model';
@@ -30,7 +30,7 @@ const modelPredictor = (model: AlphaModel, name?: string) => {
   };
 };
 
-export default class Alpha implements HistoryAgent {
+export default class Alpha implements PolicyAgent {
   private mcts: Mcts;
   constructor(options: AlphaOptions) {
     this.mcts = new Mcts({
@@ -43,8 +43,8 @@ export default class Alpha implements HistoryAgent {
   act() {
     return this.mcts.act();
   }
-  historyAct() {
-    return this.mcts.historyAct();
+  policyAct() {
+    return this.mcts.policyAct();
   }
   init() {
     return this.mcts.init();

@@ -5,7 +5,6 @@ import Rules from './rules';
 // import Network from './general';
 import Network from './residual';
 import Batcher from '../../lib/batcher';
-import { oneHot, softMax } from '../../lib/helpers';
 
 // import { indexMax } from '../../lib/helpers';
 
@@ -100,8 +99,8 @@ const getStates = (history: number[], rules: Rules) => {
     return states;
 };
 
-const getOutput = (reward: number, best: number) => {
-    const policyOutput = oneHot(best, 7);
+const getOutput = (reward: number, policy: number[]) => {
+    const policyOutput = policy;
     const rewardOutput = reward;
     return [policyOutput, rewardOutput] as Output;
 };
@@ -140,8 +139,8 @@ export default class Model {
         const pairs = [] as Pair[];
         for (let gameHistory of gameHistories) {
             const symHistories = [gameHistory.history];
-            for (let historyActions of symHistories) {
-                const history = historyActions.map(({action}) => action);
+            for (let policyActions of symHistories) {
+                const history = policyActions.map(({action}) => action);
                 const states = getStates(history, this.rules);
                 states.pop();
                 for (let i = 0; i < states.length; i++) {
@@ -150,8 +149,8 @@ export default class Model {
                     const lastState = states[i];
                     const lastPlayerIndex = lastState.playerIndex;
                     const reward = gameHistory.rewards[lastPlayerIndex];
-                    const { best } = gameHistory.history[i];
-                    const output = getOutput(reward, best);
+                    const { policy } = gameHistory.history[i];
+                    const output = getOutput(reward, policy);
                     pairs.push({
                         input,
                         output
