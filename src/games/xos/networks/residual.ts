@@ -46,7 +46,7 @@ const createModel = (options: LayersModelOptions) => {
 
   policy = denseLayer(policy, {
     name: 'policyDense',
-    units: numFilters * 2,
+    units: 2 * height * width,
     dropout
   });
 
@@ -56,7 +56,8 @@ const createModel = (options: LayersModelOptions) => {
     dropout
   });
 
-  policy = tf.layers.softmax({
+  policy = tf.layers.activation({
+    activation: 'softmax',
     name: 'policy'
   }).apply(policy) as tf.SymbolicTensor;
 
@@ -72,7 +73,7 @@ const createModel = (options: LayersModelOptions) => {
 
   reward = denseLayer(reward, {
     name: 'rewardDense',
-    units: numFilters,
+    units: 20,
     dropout
   });
 

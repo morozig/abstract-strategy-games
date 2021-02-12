@@ -54,9 +54,9 @@ const trainGeneration = async (
     const gameHistories = await playSelfAlpha({
       createWorker: () => game.createWorker(),
       model,
-      gamesCount: 1000,
+      gamesCount: 5000,
       averageTurns: 20,
-      planCount: 1
+      planCount: 300
     });
 
     for (let gameHistory of gameHistories) {

@@ -29,7 +29,7 @@ type PredictBatchResolver = (
 
 const createPlayWorker = (
   gameRules: GameRules,
-  planCount = 1
+  planCount = 300
 ) => {
   const inputsSubject = new Subject<
     ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
