@@ -2,9 +2,9 @@ import PolicyAgent from '../interfaces/policy-agent';
 import GameRules from '../interfaces/game-rules';
 import Mcts from './mcts';
 import AlphaModel from '../lib/alpha-model';
-import { softMax } from '../lib/helpers';
+// import { softMax } from '../lib/helpers';
 
-const predictionTemp = 0.5;
+// const predictionTemp = 0.5;
 interface AlphaOptions {
   gameRules: GameRules;
   model: AlphaModel;
@@ -21,11 +21,12 @@ const modelPredictor = (model: AlphaModel, name?: string) => {
       modelLoaded = true;
     }
     const { reward, policy } = await model.predict(history);
-    const softPolicy = softMax(policy, predictionTemp);
+    // const softPolicy = softMax(policy, predictionTemp);
 
     return {
       reward,
-      policy: softPolicy
+      // policy: softPolicy
+      policy
     };
   };
 };

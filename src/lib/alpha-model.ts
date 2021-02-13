@@ -46,19 +46,38 @@ export default class AlphaModel {
   ) {
     const inputs = [] as Input[];
     const outputs = [] as Output[];
-    const uniquePairs = new Map<string, Pair>();
+    const statePairs = new Map<string, Pair[]>();
 
     for (let gameHistory of gameHistories) {
       const pairs = this.rules.getPairs(gameHistory);
       for (let pair of pairs) {
         const { input } = pair;
         const hash = input.flat(2).join('');
-        if (!uniquePairs.has(hash)) {
-          uniquePairs.set(hash, pair);
+        if (!statePairs.has(hash)) {
+          statePairs.set(hash, [pair]);
+        } else {
+          const currentPairs = statePairs.get(hash);
+          if (currentPairs) {
+            statePairs.set(hash, currentPairs.concat(pair));
+          }
         }
       }
     }
-    const pairs = Array.from(uniquePairs.values());
+    const pairs = Array.from(statePairs.values())
+      .map(currentPairs => {
+        const count = currentPairs.length;
+        const pair = currentPairs[0];
+        if (count <= 1) {
+          return pair;
+        } else {
+          const totalReward = currentPairs.reduce(
+            (total, current) => total + current.output[1],
+            0
+          );
+          pair.output[1] = totalReward / count;
+          return pair;
+        }
+      });
     pairs.sort(() => Math.random() - 0.5);
 
     for (let { input, output } of pairs) {

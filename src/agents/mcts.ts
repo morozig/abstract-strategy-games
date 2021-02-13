@@ -8,7 +8,7 @@ import {
 import StepResult from '../interfaces/game-step-result';
 import PolicyAgent from '../interfaces/policy-agent';
 
-const bonusScale = 5;
+const cPuct = 4;
 // const randomizeTemp = 0.1;
 const printPolicy = false;
 
@@ -86,7 +86,7 @@ class Node {
     const parentVisits = this.parent ?
       this.parent.visits : this.visits;
     const prob = this.prob;
-    const bonus = bonusScale * prob * Math.sqrt(
+    const bonus = cPuct * prob * Math.sqrt(
       parentVisits
     ) / ( this.visits + 1 );
     return bonus;

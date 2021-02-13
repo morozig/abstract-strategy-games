@@ -50,11 +50,11 @@ const createModel = (options: LayersModelOptions) => {
     dropout
   });
 
-  policy = denseLayer(policy, {
+  policy = tf.layers.dense({
     name: 'policyDenseHead',
     units: height * width,
-    dropout
-  });
+    useBias: false
+  }).apply(policy) as tf.SymbolicTensor;
 
   policy = tf.layers.activation({
     activation: 'softmax',
@@ -71,17 +71,11 @@ const createModel = (options: LayersModelOptions) => {
   reward = tf.layers.flatten(
   ).apply(reward) as tf.SymbolicTensor;
 
-  reward = denseLayer(reward, {
-    name: 'rewardDense',
-    units: 20,
-    dropout
-  });
-
-  reward = denseLayer(reward, {
+  reward = tf.layers.dense({
     name: 'rewardDenseHead',
     units: 1,
-    dropout
-  });
+    useBias: false
+  }).apply(reward) as tf.SymbolicTensor;
 
   reward = tf.layers.activation({
     activation: 'tanh',

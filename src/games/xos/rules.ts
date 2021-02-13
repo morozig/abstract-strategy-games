@@ -211,8 +211,15 @@ export default class Rules implements GameRules {
     const lastPolicyAction = gameHistory.history[
       gameHistory.history.length - 1
     ];
+    const history = gameHistory.history.map(
+      policyAction => policyAction.action
+    );
+    const states = getStates(history, this);
+    const lastState = states[states.length - 1];
+    const lastPlayerIndex = lastState.playerIndex;
+    const reward = gameHistory.rewards[lastPlayerIndex];
     const policyOutput = lastPolicyAction.policy;
-    const rewardOutput = lastPolicyAction.value;
+    const rewardOutput = ( lastPolicyAction.value + reward) / 2;
     return [policyOutput, rewardOutput] as Output;
   }
   getPairs(gameHistory: GameHistory) {
