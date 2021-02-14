@@ -25,7 +25,7 @@ export default class Xos implements Game {
     },
     {
       type: GamePlayerType.Alpha,
-      planCount: 300,
+      planCount: 800,
       modelName: 'mcts-5000'
     },
   ] as GamePlayer[];

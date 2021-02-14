@@ -52,8 +52,7 @@ const createModel = (options: LayersModelOptions) => {
 
   policy = tf.layers.dense({
     name: 'policyDenseHead',
-    units: height * width,
-    useBias: false
+    units: height * width
   }).apply(policy) as tf.SymbolicTensor;
 
   policy = tf.layers.activation({
@@ -71,10 +70,15 @@ const createModel = (options: LayersModelOptions) => {
   reward = tf.layers.flatten(
   ).apply(reward) as tf.SymbolicTensor;
 
+  reward = denseLayer(reward, {
+    name: 'rewardDense',
+    units: 20,
+    dropout
+  });
+
   reward = tf.layers.dense({
     name: 'rewardDenseHead',
-    units: 1,
-    useBias: false
+    units: 1
   }).apply(reward) as tf.SymbolicTensor;
 
   reward = tf.layers.activation({
