@@ -56,7 +56,7 @@ const trainGeneration = async (
       model,
       gamesCount: 5000,
       averageTurns: 20,
-      planCount: 800
+      planCount: 500
     });
 
     for (let gameHistory of gameHistories) {

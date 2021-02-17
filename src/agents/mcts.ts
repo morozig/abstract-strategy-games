@@ -5,8 +5,8 @@ import {
   indexMax,
   chooseIndex
 } from '../lib/helpers';
-import StepResult from '../interfaces/game-step-result';
 import PolicyAgent from '../interfaces/policy-agent';
+import GameState from '../interfaces/game-state';
 
 const cPuct = 4;
 // const randomizeTemp = 0.1;
@@ -52,11 +52,22 @@ const defaultPredictor = (gameRules: GameRules) => {
   };
 };
 
+interface LightState {
+  readonly playerIndex: number;
+  board: number[][] | null;
+};
+
+interface LightResult {
+  readonly state: LightState;
+  readonly rewards: number[];
+  readonly done: boolean;
+};
+
 interface NodeOptions {
   parent: Node | null;
   action: number;
   prob: number;
-  stepResult: StepResult;
+  stepResult: LightResult;
 }
 
 class Node {
@@ -64,7 +75,7 @@ class Node {
   parent: Node | null;
   action: number;
   prob: number;
-  stepResult: StepResult;
+  stepResult: LightResult;
   children: Node[] = [];
   totalValue = 0;
   meanValue = 0;
@@ -201,7 +212,7 @@ export default class Mcts implements PolicyAgent{
       this.root.parent = null;
     } else {
       const stepResult = this.gameRules.step(
-        this.root.stepResult.state,
+        this.root.stepResult.state as GameState,
         action
       );
       this.root = new Node({
@@ -233,7 +244,7 @@ export default class Mcts implements PolicyAgent{
     const { reward, policy } = await this.predict(history);
     node.prediction = { reward, policy };
     const availables = this.gameRules.availables(
-      node.stepResult.state
+      node.stepResult.state as GameState
     );
     const totalProb = availables.reduce(
       (total, current) => total + policy[current - 1],
@@ -242,7 +253,7 @@ export default class Mcts implements PolicyAgent{
     for (let action of availables) {
       const prob = policy[action - 1] / totalProb;
       const stepResult = this.gameRules.step(
-        node.stepResult.state,
+        node.stepResult.state as GameState,
         action
       );
       const child = new Node({
@@ -253,6 +264,7 @@ export default class Mcts implements PolicyAgent{
       });
       node.children.push(child);
     }
+    node.stepResult.state.board = null;
     return reward;
   }
   async plan() {
