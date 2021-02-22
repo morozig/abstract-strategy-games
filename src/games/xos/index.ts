@@ -8,11 +8,12 @@ import * as network from './networks/residual';
 import {
   Worker
 } from 'threads';
+import config from './config.json';
 
 export default class Xos implements Game {
-  readonly height = 5;
-  readonly width = 5;
-  readonly same = 4;
+  readonly height = config.height;
+  readonly width = config.width;
+  readonly same = config.same;
   readonly name: string;
   readonly title: string;
   readonly rules: Rules;
@@ -25,7 +26,7 @@ export default class Xos implements Game {
     },
     {
       type: GamePlayerType.Alpha,
-      planCount: 500,
+      planCount: config.planCount,
       modelName: 'mcts-5000'
     },
   ] as GamePlayer[];

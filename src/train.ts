@@ -12,6 +12,7 @@ import {
 
 // import GameClass from './games/four-row';
 import GameClass from './games/xos';
+import { GamePlayerType } from './interfaces/game-player';
 // import { GamePlayerType } from './interfaces/game-player';
 
 // const winRate = 0.6;
@@ -27,9 +28,9 @@ const trainGeneration = async (
     return;
   }
   // const rules = game.rules;
-  // const planCount = game.players.find(
-  //   player => player.type === GamePlayerType.Alpha
-  // )?.planCount || game.rules.actionsCount; 
+  const planCount = game.players.find(
+    player => player.type === GamePlayerType.Alpha
+  )?.planCount || game.rules.actionsCount; 
   const previousGeneration = generation - 1;
   const previousModelName = `alpha-${previousGeneration}`;
   const previousModel = game.createModel();
@@ -56,7 +57,7 @@ const trainGeneration = async (
       model,
       gamesCount: 5000,
       averageTurns: 20,
-      planCount: 500
+      planCount
     });
 
     for (let gameHistory of gameHistories) {

@@ -154,7 +154,7 @@ export default class Mcts implements PolicyAgent{
     this.predict = options.predict ?
       options.predict : defaultPredictor(this.gameRules);
     this.planCount = options.planCount ?
-      options.planCount : 100;
+      options.planCount : options.gameRules.actionsCount;
     this.randomize = !!options.randomize;
     this.root = new Node({
       parent: null,

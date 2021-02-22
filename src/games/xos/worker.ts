@@ -1,8 +1,9 @@
 import { expose } from 'threads/worker';
 import createPlayWorker from '../../lib/play-worker';
+import config from './config.json';
 import Rules from './rules';
 
-const rules = new Rules(5, 5, 4);
-const worker = createPlayWorker(rules);
+const rules = new Rules(config.height, config.width, config.same);
+const worker = createPlayWorker(rules, config.planCount);
 
 expose(worker);
