@@ -18,6 +18,7 @@ export default interface Rules{
   height: number;
   width: number;
   depth: number;
+  playersCount: number;
   getPairs(gameHistory: GameHistory): Pair[];
   getInput(history: number[]): Input;
 }

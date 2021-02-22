@@ -11,15 +11,26 @@ import GamePrediction from '../interfaces/game-prediction';
 import Batcher from './batcher';
 import { sleep } from './helpers';
 
+interface InputsRequest {
+  inputs: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>;
+  modelIndex?: number;
+};
+
+interface OutputsResponse {
+  policies: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>;
+  rewards: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>;
+  modelIndex?: number;
+};
+
+export interface PlayWorkerOptions {
+  gameName?: string;
+  modelsIndices?: number[];
+};
+
 export type PlayWorkerType = {
-  play: (gameName?: string) => Promise<GameHistory>;
-  inputs: () => Observable<
-    ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
-  >;
-  setOutputs: (
-    policies: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>,
-    rewards: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
-  ) => void;
+  play: (options: PlayWorkerOptions) => Promise<GameHistory>;
+  inputs: () => Observable<InputsRequest>;
+  setOutputs: (outputsResponse: OutputsResponse) => void;
 };
 
 type PredictBatchResolver = (
@@ -31,19 +42,30 @@ const createPlayWorker = (
   gameRules: GameRules,
   planCount: number
 ) => {
-  const inputsSubject = new Subject<
-    ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
-  >();
+  const inputsSubject = new Subject<InputsRequest>();
   const queue = [] as PredictBatchResolver[];
-  const predictBatch = async (histories: number[][]) => {
+  const modelsQueue = new Array(gameRules.playersCount)
+    .fill(undefined)
+    .map(_ => [] as PredictBatchResolver[]);
+  const predictBatch = async (
+    histories: number[][],
+    modelIndex?: number
+  ) => {
     const inputBuffers = histories
       .map(history => gameRules.getInput(history))
       .map(input => new Float32Array(input.flat(2)))
       .map(typedInput => typedInput.buffer);
-    inputsSubject.next(Transfer(inputBuffers, inputBuffers));
+    inputsSubject.next({
+      inputs: Transfer(inputBuffers, inputBuffers),
+      modelIndex
+    });
     const [ policyBuffers, rewardBuffers ] = await new Promise(
       (resolve: PredictBatchResolver) => {
-        queue.push(resolve);
+        if (modelIndex === undefined) {
+          queue.push(resolve);
+        } else {
+          modelsQueue[modelIndex].push(resolve);
+        }
       }
     );
     const predictions = policyBuffers.map(
@@ -68,30 +90,51 @@ const createPlayWorker = (
     0,
     10
   );
-  const predict = (history: number[]) => batcher.call(history);
+  const modelsBatchers = new Array(gameRules.playersCount)
+    .fill(undefined)
+    .map((_, i) => new Batcher(
+      (histories: number[][]) => predictBatch(histories, i),
+      0,
+      10
+    ));
+  const predict = (
+    history: number[],
+    modelIndex?: number
+  ) => {
+    if (modelIndex === undefined) {
+      return batcher.call(history);
+    } else {
+      return modelsBatchers[modelIndex].call(history);
+    }
+  }
 
   return {
     inputs() {
       return Observable.from(inputsSubject)
     },
-    setOutputs(
-      policyBuffers: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>,
-      rewardBuffers: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>
-    ) {
-      const resolve = queue.shift();
+    setOutputs(outputsResponse: OutputsResponse) {
+      const resolve = outputsResponse.modelIndex === undefined ?
+        queue.shift() :
+        modelsQueue[outputsResponse.modelIndex].shift();
       if (resolve) {
         resolve([
-          ('send' in policyBuffers) ?
-            policyBuffers.send :
-            policyBuffers,
-          ('send' in rewardBuffers) ?
-            rewardBuffers.send :
-            rewardBuffers
+          ('send' in outputsResponse.policies) ?
+            outputsResponse.policies.send :
+            outputsResponse.policies,
+          ('send' in outputsResponse.rewards) ?
+            outputsResponse.rewards.send :
+            outputsResponse.rewards
         ]);
       }
     },
-    async play(gameName?: string) {
-      batcher.setSize(size => size + 1);
+    async play(options: PlayWorkerOptions) {
+      if (options.modelsIndices) {
+        for (let batcher of modelsBatchers) {
+          batcher.setSize(size => size + 1);
+        }
+      } else {
+        batcher.setSize(size => size + 1);
+      }
       await sleep(10);
       const gameHistory = await play(
         gameRules,
@@ -99,19 +142,31 @@ const createPlayWorker = (
           new Mcts({
             gameRules: gameRules,
             planCount: planCount,
-            predict: (history: number[]) => predict(history),
+            predict: (history: number[]) => predict(
+              history,
+              options.modelsIndices && options.modelsIndices[0]
+            ),
             randomize: true
           }),
           new Mcts({
             gameRules: gameRules,
             planCount: planCount,
-            predict: (history: number[]) => predict(history),
+            predict: (history: number[]) => predict(
+              history,
+              options.modelsIndices && options.modelsIndices[1]
+            ),
             randomize: true
           }),
         ],
-        gameName
+        options.gameName
       );
-      batcher.setSize(size => size - 1);
+      if (options.modelsIndices) {
+        for (let batcher of modelsBatchers) {
+          batcher.setSize(size => size - 1);
+        }
+      } else {
+        batcher.setSize(size => size - 1);
+      }
       return gameHistory;
     }
   } as PlayWorkerType;

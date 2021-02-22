@@ -24,6 +24,7 @@ export default class Rules implements GameRules {
   readonly width: number;
   readonly actionsCount: number;
   readonly depth: number;
+  readonly playersCount = 2;
   private same: number;
   constructor(height: number, width: number, same: number) {
     this.height = height;

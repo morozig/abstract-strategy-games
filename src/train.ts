@@ -1,4 +1,5 @@
 import {
+  playContestAlpha,
   playSelfAlpha
 } from './lib/play';
 import Game from '../src/interfaces/game';
@@ -15,7 +16,7 @@ import GameClass from './games/xos';
 import { GamePlayerType } from './interfaces/game-player';
 // import { GamePlayerType } from './interfaces/game-player';
 
-// const winRate = 0.6;
+const winRate = 0.6;
 
 const trainGeneration = async (
   game: Game,
@@ -68,54 +69,54 @@ const trainGeneration = async (
   }
 
   // console.log(modelHistories);
-  const loss = await model.train(modelHistories);
 
-  if (loss < 1) {
+  const loss = await model.train(modelHistories);
+  if (loss > 1) {
+    return false;
+  }
+
+  const gamesCount = 50;
+  const contest = await playContestAlpha({
+    createWorker: () => game.createWorker(),
+    models: [
+      model,
+      previousModel
+    ],
+    gamesCount,
+    averageTurns: 20,
+    planCount
+  });
+  const player1Won = contest
+    .slice(0, gamesCount)
+    .filter(({ rewards }) => rewards[0] === 1)
+    .length;
+  const player1Lost = contest
+    .slice(0, gamesCount)
+    .filter(({ rewards }) => rewards[0] === -1)
+    .length;
+  const player2Won = contest
+    .slice(gamesCount)
+    .filter(({ rewards }) => rewards[1] === 1)
+    .length;
+  const player2Lost = contest
+    .slice(gamesCount)
+    .filter(({ rewards }) => rewards[1] === -1)
+    .length;
+  const modelScore = (player1Won + player2Won) / (
+    (player1Won + player1Lost + player2Won + player2Lost) || 1
+  );
+  console.log(
+    'player1Won', player1Won,
+    'player1Lost', player1Lost,
+    'player2Won', player2Won,
+    'player2Lost', player2Lost
+  );
+  console.log(`score: ${modelScore.toFixed(2)}`);
+      
+  if (modelScore >= winRate) {
     await model.save(modelName);
   }
-  return false;
-
-  // const gamesCount = 25;
-  // const contest = await playAlpha({
-  //   gameRules: rules,
-  //   model1: model,
-  //   model2: previousModel,
-  //   gamesCount: gamesCount,
-  //   switchSides: true,
-  //   planCount,
-  //   randomize: true
-  // });
-  // const player1Won = contest
-  //   .slice(0, gamesCount)
-  //   .filter(({ rewards }) => rewards[0] === 1)
-  //   .length;
-  // const player1Lost = contest
-  //   .slice(0, gamesCount)
-  //   .filter(({ rewards }) => rewards[0] === -1)
-  //   .length;
-  // const player2Won = contest
-  //   .slice(gamesCount)
-  //   .filter(({ rewards }) => rewards[1] === 1)
-  //   .length;
-  // const player2Lost = contest
-  //   .slice(gamesCount)
-  //   .filter(({ rewards }) => rewards[1] === -1)
-  //   .length;
-  // const modelScore = (player1Won + player2Won) / (
-  //   (player1Won + player1Lost + player2Won + player2Lost) || 1
-  // );
-  // console.log(
-  //   'player1Won', player1Won,
-  //   'player1Lost', player1Lost,
-  //   'player2Won', player2Won,
-  //   'player2Lost', player2Lost
-  // );
-  // console.log(`score: ${modelScore.toFixed(2)}`);
-      
-  // if (modelScore >= winRate) {
-  //   await model.save(modelName);
-  // }
-  // return modelScore >= winRate;
+  return modelScore >= winRate;
 };
 
 const trainAlpha = async (game: Game) => {
