@@ -68,16 +68,15 @@ export default class AlphaNetwork {
         epochs: this.epochs,
         shuffle: true,
         validationSplit: 0.01,
-        callbacks: {
-          onEpochEnd: console.log
-        }
+        // callbacks: {
+        //   onEpochEnd: console.log
+        // }
       }
     );
 
     xsTensor.dispose();
     policiesTensor.dispose();
     rewardsTensor.dispose();
-    console.log(trainingHistory);
     const loss = trainingHistory.history.val_loss[
       this.epochs - 1
     ] as number;

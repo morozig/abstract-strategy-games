@@ -48,6 +48,7 @@ export default class AlphaModel {
     const outputs = [] as Output[];
     const statePairs = new Map<string, Pair[]>();
 
+    console.log('preparing training examples...');
     for (let gameHistory of gameHistories) {
       const pairs = this.rules.getPairs(gameHistory);
       for (let pair of pairs) {
