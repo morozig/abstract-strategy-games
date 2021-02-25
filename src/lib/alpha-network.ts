@@ -4,6 +4,7 @@ import {
   saveModel,
   loadModel
 } from '../lib/api';
+import { kld } from './networks';
 
 export type TypedInput = Float32Array;
 export type TypedOutput = [Float32Array, Float32Array];
@@ -41,7 +42,10 @@ export default class AlphaNetwork {
     const optimizer = tf.train.sgd(this.learningRate);
     this.model.compile({
       optimizer: optimizer,
-      loss: 'meanSquaredError'
+      loss: [
+        kld,
+        tf.losses.meanSquaredError
+      ],
     });
   }
   async fit(

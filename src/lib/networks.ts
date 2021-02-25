@@ -136,10 +136,27 @@ const countResidualLayers = (model: tf.LayersModel) => {
   return (totalResidualConvLayers - 2) / 4;
 };
 
+const kld = (
+  labels: tf.Tensor|tf.TensorLike,
+  predictions: tf.Tensor|tf.TensorLike,
+  weights?: tf.Tensor|tf.TensorLike,
+  epsilon = 1e-7,
+  reduction = tf.Reduction.SUM_BY_NONZERO_WEIGHTS
+): tf.Tensor => {
+  const yPred = tf.clipByValue(predictions, epsilon, 1);
+  const yTrue = tf.clipByValue(labels, epsilon, 1);
+  const loss = tf.sum(tf.mul(
+    yTrue,
+    tf.log( tf.div( yTrue, yPred ) )
+  ), -1);
+  return tf.losses.computeWeightedLoss(loss, weights, reduction);
+}
+
 export {
   convLayer2D,
   residualNetwork2D,
   copyWeights,
   countResidualLayers,
-  denseLayer
+  denseLayer,
+  kld
 }
