@@ -15,6 +15,8 @@ import Batcher from './batcher';
 import { TypedInput } from './alpha-network';
 import ProgressBar from './progress-bar';
 
+const temp = 0.1;
+
 const getStates = (history: number[], rules: GameRules) => {
   const initial = rules.init();
   const states = [initial];
@@ -317,7 +319,8 @@ const playContestAlpha = async (options: PlayContestAlphaOptions) => {
     pool.queue(async worker => {
       const gameHistory = await worker.play({
         gameName: `${i}`,
-        modelsIndices: [0, 1]
+        modelsIndices: [0, 1],
+        temp
       });
       const turnsDelta = Math.max(
         averageTurns - gameHistory.history.length,
@@ -336,7 +339,8 @@ const playContestAlpha = async (options: PlayContestAlphaOptions) => {
     pool.queue(async worker => {
       const gameHistory = await worker.play({
         gameName: `${i}`,
-        modelsIndices: [1, 0]
+        modelsIndices: [1, 0],
+        temp
       });
       const turnsDelta = Math.max(
         averageTurns - gameHistory.history.length,

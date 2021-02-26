@@ -25,6 +25,7 @@ interface OutputsResponse {
 export interface PlayWorkerOptions {
   gameName?: string;
   modelsIndices?: number[];
+  temp?: number;
 };
 
 export type PlayWorkerType = {
@@ -146,7 +147,8 @@ const createPlayWorker = (
               history,
               options.modelsIndices && options.modelsIndices[0]
             ),
-            randomize: true
+            randomize: true,
+            temp: options.temp
           }),
           new Mcts({
             gameRules: gameRules,
@@ -155,7 +157,8 @@ const createPlayWorker = (
               history,
               options.modelsIndices && options.modelsIndices[1]
             ),
-            randomize: true
+            randomize: true,
+            temp: options.temp
           }),
         ],
         options.gameName

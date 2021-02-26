@@ -30,8 +30,9 @@ const chooseIndex = (probs: number[]) => {
 }
 
 const indexSoftMax = (numbers: number[], temp?: number) => {
-  const softMaxed = softMax(numbers, temp);
-  return chooseIndex(softMaxed);
+  return temp === undefined ?
+    chooseIndex(numbers) :
+    chooseIndex(softMax(numbers, temp));
 };
 
 const randomOf = <T>(items: T[]) => {
