@@ -8,7 +8,7 @@ import {
 const numFilters = 128;
 const numLayers = 5;
 const batchSize = 1024;
-const epochs = 30;
+const epochs = 20;
 const learningRate = 0.01;
 const dropout = 0.3;
 

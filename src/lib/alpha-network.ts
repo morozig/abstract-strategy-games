@@ -38,8 +38,8 @@ export default class AlphaNetwork {
     this.compile();
   }
   private compile() {
-    // const optimizer = tf.train.adam(this.learningRate);
-    const optimizer = tf.train.sgd(this.learningRate);
+    const optimizer = tf.train.adam(this.learningRate);
+    // const optimizer = tf.train.sgd(this.learningRate);
     this.model.compile({
       optimizer: optimizer,
       loss: [
