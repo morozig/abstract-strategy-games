@@ -4,7 +4,8 @@ import { component } from './component';
 import GamePlayer, { GamePlayerType } from '../../interfaces/game-player';
 import GameComponent from '../../interfaces/game-component';
 import AlphaModel from '../../lib/alpha-model';
-import * as network from './networks/residual';
+import Policy from './networks/policy';
+import Reward from './networks/reward';
 import {
   Worker
 } from 'threads';
@@ -42,11 +43,12 @@ export default class Xos implements Game {
     });
   }
   createModel() {
-    const {
-      createModel,
-      ...modelParams
-    } = network;
-    const model = createModel({
+    const policy = new Policy({
+      height: this.rules.height,
+      width: this.rules.width,
+      depth: this.rules.depth
+    });
+    const reward = new Reward({
       height: this.rules.height,
       width: this.rules.width,
       depth: this.rules.depth
@@ -54,8 +56,8 @@ export default class Xos implements Game {
     return new AlphaModel({
       gameName: this.name,
       rules: this.rules,
-      model,
-      ...modelParams
+      policy,
+      reward
     });
   }
 }

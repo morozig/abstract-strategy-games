@@ -4,86 +4,119 @@ import {
   saveModel,
   loadModel
 } from '../lib/api';
-import { kld } from './networks';
+import { copyWeights } from './networks';
 
 export type TypedInput = Float32Array;
 export type TypedOutput = [Float32Array, Float32Array];
+
+export interface TfNetwork {
+  readonly graph: (input: tf.SymbolicTensor) => tf.SymbolicTensor;
+  readonly batchSize: number;
+  readonly epochs: number;
+  readonly compileArgs: tf.ModelCompileArgs;
+};
 
 export interface AlphaNetworkOptions {
   height: number;
   width: number;
   depth: number;
-  batchSize: number;
-  epochs: number;
-  learningRate: number;
-  model: tf.LayersModel;
+  policy: TfNetwork;
+  reward: TfNetwork;
 };
 
 export default class AlphaNetwork {
   private height: number;
   private width: number;
   private depth: number;
-  private batchSize: number;
-  private epochs: number;
-  private learningRate: number;
+  private policy: TfNetwork;
+  private reward: TfNetwork;
   private model: tf.LayersModel;
   constructor(options: AlphaNetworkOptions) {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
-    this.batchSize = options.batchSize;
-    this.epochs = options.epochs;
-    this.learningRate = options.learningRate;
-    this.model = options.model;
-    this.compile();
-  }
-  private compile() {
-    const optimizer = tf.train.adam(this.learningRate);
-    // const optimizer = tf.train.sgd(this.learningRate);
-    this.model.compile({
-      optimizer: optimizer,
-      loss: [
-        kld,
-        tf.losses.meanSquaredError
-      ],
+    this.policy = options.policy;
+    this.reward = options.reward;
+    const input = tf.input({
+      shape: [this.height, this.width, this.depth]
     });
+    this.model = tf.model(
+      {
+        inputs: input,
+        outputs: [
+          this.policy.graph(input),
+          this.reward.graph(input)
+        ]
+      }
+    );
   }
   async fit(
     inputs: Input[],
     outputs: Output[]
   ){
     const xsTensor = tf.tensor4d(inputs);
+    const input = tf.input({
+      shape: [this.height, this.width, this.depth]
+    });
+
+    console.log('training policy model...');
     const policiesTensor = tf.tensor2d(outputs.map(
       output => output[0]
     ));
+    const policyModel = tf.model(
+      {
+        inputs: input,
+        outputs: this.policy.graph(input)
+      }
+    );
+    copyWeights(this.model, policyModel);
+    policyModel.compile(this.policy.compileArgs);
+    const policyHistory = await policyModel.fit(
+      xsTensor,
+      policiesTensor,
+      {
+        batchSize: this.policy.batchSize,
+        epochs: this.policy.epochs,
+        shuffle: true,
+        validationSplit: 0.01
+      }
+    );
+    policiesTensor.dispose();
+    const policyLoss = policyHistory.history.val_loss[
+      this.policy.epochs - 1
+    ] as number;
+    copyWeights(policyModel, this.model);
+
+    console.log('training reward model...');
     const rewardsTensor = tf.tensor2d(outputs.map(
       output => [output[1]]
     ));
-    const ysTensors = [
-      policiesTensor,
-      rewardsTensor
-    ];
-
-    const trainingHistory = await this.model.fit(
-      xsTensor,
-      ysTensors,
+    const rewardModel = tf.model(
       {
-        batchSize: this.batchSize,
-        epochs: this.epochs,
-        shuffle: true,
-        validationSplit: 0.01,
-        // callbacks: {
-        //   onEpochEnd: console.log
-        // }
+        inputs: input,
+        outputs: this.reward.graph(input)
       }
     );
+    copyWeights(this.model, rewardModel);
+    rewardModel.compile(this.reward.compileArgs);
+    const rewardHistory = await rewardModel.fit(
+      xsTensor,
+      policiesTensor,
+      {
+        batchSize: this.reward.batchSize,
+        epochs: this.reward.epochs,
+        shuffle: true,
+        validationSplit: 0.01
+      }
+    );
+    rewardsTensor.dispose();
+    const rewardLoss = rewardHistory.history.val_loss[
+      this.reward.epochs - 1
+    ] as number;
+    copyWeights(rewardModel, this.model);
 
     xsTensor.dispose();
-    policiesTensor.dispose();
-    rewardsTensor.dispose();
-    const loss = trainingHistory.history.val_loss[
-      this.epochs - 1
-    ] as number;
+    const loss = policyLoss + rewardLoss;
     return loss;
   }
 
@@ -149,6 +182,5 @@ export default class AlphaNetwork {
   async load(gameName: string, modelName: string) {
     this.model.dispose();
     this.model = await loadModel(gameName, modelName);
-    this.compile();
   }
 };

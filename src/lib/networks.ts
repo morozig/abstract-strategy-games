@@ -40,15 +40,18 @@ const residualLayer2D = (
     id: number;
     numFilters: number;
     kernelSize?: number;
+    namePrefix?: string;
   }
 ) => {
+  const namePrefix = options.namePrefix ?
+    `${options.namePrefix}_` : '';
   let network = convLayer2D(input, {
-    name: `residual${options.id}_conv2d1`,
+    name: `${namePrefix}residual${options.id}_conv2d1`,
     numFilters: options.numFilters,
     kernelSize: options.kernelSize
   });
   network = convLayer2D(network, {
-    name: `residual${options.id}_conv2d2`,
+    name: `${namePrefix}residual${options.id}_conv2d2`,
     numFilters: options.numFilters,
     kernelSize: options.kernelSize,
     noActivation: true
@@ -68,10 +71,13 @@ const residualNetwork2D = (
     numLayers: number;
     numFilters: number;
     kernelSize?: number;
+    namePrefix?: string;
   }
 ) => {
+  const namePrefix = options.namePrefix ?
+    `${options.namePrefix}_` : '';
   let network = convLayer2D(input, {
-    name: 'residual0_conv2d',
+    name: `${namePrefix}residual0_conv2d`,
     numFilters: options.numFilters,
     kernelSize: options.kernelSize
   });
@@ -80,7 +86,8 @@ const residualNetwork2D = (
     network = residualLayer2D(network, {
       id: i,
       numFilters: options.numFilters,
-      kernelSize: options.kernelSize
+      kernelSize: options.kernelSize,
+      namePrefix: options.namePrefix
     })
   }
   return network;
@@ -118,12 +125,17 @@ const copyWeights = (from: tf.LayersModel, to: tf.LayersModel) => {
     if (!sourceWeights || sourceWeights.length <= 0) {
       continue;
     }
+    if (!to.layers.find(
+      targetLayer => sourceLayer.name === targetLayer.name
+    )){
+      continue;
+    }
     try {
       const targetLayer = to.getLayer(sourceLayer.name);
       targetLayer.setWeights(sourceWeights);
     }
     catch (err) {
-      console.log(`Failed to copy layer ${sourceLayer.name}: ${err}`, from.layers);
+      console.log(`Failed to copy layer ${sourceLayer.name}: ${err}`);
     }
   }
 };

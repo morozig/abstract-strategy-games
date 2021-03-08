@@ -4,41 +4,32 @@ import GameRules, {
   Output,
   Pair
 } from '../interfaces/game-rules';
-import AlphaNetwork, { TypedInput } from './alpha-network';
-import * as tf from '@tensorflow/tfjs';
+import AlphaNetwork, { TfNetwork, TypedInput } from './alpha-network';
 
 interface AlphaModelOptions {
   gameName: string;
   rules: GameRules,
-  model: tf.LayersModel;
-  batchSize: number;
-  epochs: number;
-  learningRate: number;
+  policy: TfNetwork;
+  reward: TfNetwork;
 };
 
 export default class AlphaModel {
   private gameName: string;
   private rules: GameRules;
-  private model: tf.LayersModel;
-  private batchSize: number;
-  private epochs: number;
-  private learningRate: number;
+  private policy: TfNetwork;
+  private reward: TfNetwork;
   private network: AlphaNetwork;
   constructor(options: AlphaModelOptions) {
     this.gameName = options.gameName;
     this.rules = options.rules;
-    this.model = options.model;
-    this.batchSize = options.batchSize;
-    this.epochs = options.epochs;
-    this.learningRate = options.learningRate;
+    this.policy = options.policy;
+    this.reward = options.reward;
     this.network = new AlphaNetwork({
       height: this.rules.height,
       width: this.rules.width,
       depth: this.rules.depth,
-      model: this.model,
-      batchSize: this.batchSize,
-      epochs: this.epochs,
-      learningRate: this.learningRate
+      policy: this.policy,
+      reward: this.reward
     });
   }
   async train(
