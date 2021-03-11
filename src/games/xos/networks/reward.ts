@@ -41,14 +41,16 @@ export default class Reward implements TfNetwork {
       numLayers,
       numFilters,
       kernelSize: 3,
-      namePrefix: 'reward'
+      namePrefix: 'reward',
+      dropout: dropout
     });
   
     let reward = convLayer2D(network, {
       name: 'rewardConv',
       numFilters: 1,
       kernelSize: 1,
-      padding: 'same'
+      padding: 'same',
+      dropout: dropout
     });
   
     reward = tf.layers.flatten(
@@ -59,11 +61,13 @@ export default class Reward implements TfNetwork {
       units: 20,
       dropout
     });
-  
-    reward = tf.layers.dense({
+
+    reward = denseLayer(reward, {
       name: 'rewardDenseHead',
-      units: 1
-    }).apply(reward) as tf.SymbolicTensor;
+      units: 1,
+      dropout,
+      noActivation: true
+    });
   
     reward = tf.layers.activation({
       activation: 'tanh',

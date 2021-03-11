@@ -10,7 +10,7 @@ import {
 const numFilters = 128;
 const numLayers = 5;
 const batchSize = 1024;
-const epochs = 10;
+const epochs = 15;
 const learningRate = 0.01;
 const dropout = 0.3;
 
@@ -42,14 +42,16 @@ export default class Policy implements TfNetwork {
       numLayers,
       numFilters,
       kernelSize: 3,
-      namePrefix: 'policy'
+      namePrefix: 'policy',
+      dropout: dropout
     });
   
     let policy = convLayer2D(network, {
       name: 'policyConv',
       numFilters: 2,
       kernelSize: 1,
-      padding: 'same'
+      padding: 'same',
+      dropout: dropout
     })
   
     policy = tf.layers.flatten(
@@ -60,11 +62,13 @@ export default class Policy implements TfNetwork {
       units: 2 * this.height * this.width,
       dropout
     });
-  
-    policy = tf.layers.dense({
+
+    policy = denseLayer(policy, {
       name: 'policyDenseHead',
-      units: this.height * this.width
-    }).apply(policy) as tf.SymbolicTensor;
+      units: this.height * this.width,
+      dropout,
+      noActivation: true
+    });
   
     policy = tf.layers.activation({
       activation: 'softmax',

@@ -7,20 +7,27 @@ const convLayer2D = (
     kernelSize?: number | number[];
     name: string;
     noActivation?: boolean;
-    padding?: 'same' | 'valid'
+    padding?: 'same' | 'valid';
+    dropout?: number;
   }
 ) => {
   const kernelSize = options.kernelSize || 3;
   const padding = options.padding || 'same';
   const useActivation = !options.noActivation;
-  let network = tf.layers.conv2d({
+  let network = input;
+  if (options.dropout) {
+    network = tf.layers.dropout({
+      rate: options.dropout
+    }).apply(network) as tf.SymbolicTensor;
+  }
+  network = tf.layers.conv2d({
     kernelSize,
     filters: options.numFilters,
     strides: 1,
     padding,
     name: options.name,
     useBias: false
-  }).apply(input) as tf.SymbolicTensor;
+  }).apply(network) as tf.SymbolicTensor;
   network = tf.layers.batchNormalization({
     name: `${options.name}_bn`,
     axis: 3
@@ -41,6 +48,7 @@ const residualLayer2D = (
     numFilters: number;
     kernelSize?: number;
     namePrefix?: string;
+    dropout?: number;
   }
 ) => {
   const namePrefix = options.namePrefix ?
@@ -48,7 +56,8 @@ const residualLayer2D = (
   let network = convLayer2D(input, {
     name: `${namePrefix}residual${options.id}_conv2d1`,
     numFilters: options.numFilters,
-    kernelSize: options.kernelSize
+    kernelSize: options.kernelSize,
+    dropout: options.dropout
   });
   network = convLayer2D(network, {
     name: `${namePrefix}residual${options.id}_conv2d2`,
@@ -72,6 +81,7 @@ const residualNetwork2D = (
     numFilters: number;
     kernelSize?: number;
     namePrefix?: string;
+    dropout?: number;
   }
 ) => {
   const namePrefix = options.namePrefix ?
@@ -99,23 +109,27 @@ const denseLayer = (
     units: number;
     dropout: number;
     name: string;
+    noActivation?: boolean;
   }
 ) => {
-  let network = tf.layers.dense({
+  const useActivation = !options.noActivation;
+  let network = tf.layers.dropout({
+    rate: options.dropout
+  }).apply(input) as tf.SymbolicTensor;
+  network = tf.layers.dense({
     units: options.units,
     name: options.name,
     useBias: false
-  }).apply(input) as tf.SymbolicTensor;
+  }).apply(network) as tf.SymbolicTensor;
   network = tf.layers.batchNormalization({
     name: `${options.name}_bn`,
     axis: 1
   }).apply(network) as tf.SymbolicTensor;
-  network = tf.layers.activation({
-    activation: 'relu'
-  }).apply(network) as tf.SymbolicTensor;
-  network = tf.layers.dropout({
-    rate: options.dropout
-  }).apply(network) as tf.SymbolicTensor;
+  if (useActivation) {
+    network = tf.layers.activation({
+      activation: 'relu'
+    }).apply(network) as tf.SymbolicTensor;
+  }
   return network;
 };
 

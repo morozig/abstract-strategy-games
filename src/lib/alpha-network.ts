@@ -101,7 +101,7 @@ export default class AlphaNetwork {
     rewardModel.compile(this.reward.compileArgs);
     const rewardHistory = await rewardModel.fit(
       xsTensor,
-      policiesTensor,
+      rewardsTensor,
       {
         batchSize: this.reward.batchSize,
         epochs: this.reward.epochs,
@@ -117,6 +117,7 @@ export default class AlphaNetwork {
 
     xsTensor.dispose();
     const loss = policyLoss + rewardLoss;
+    console.log('loss:', loss.toPrecision(3));
     return loss;
   }
 

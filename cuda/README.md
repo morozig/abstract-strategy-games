@@ -74,6 +74,15 @@ docker run --gpus all \
 tfjs-node-gpu \
 npm run cuda
 
+docker run --gpus all \
+-u $(id -u):$(id -g) \
+--rm \
+-it \
+-v $(pwd):/app \
+-w=/app \
+tfjs-node-gpu \
+npm run cuda
+
 ```
 
 
