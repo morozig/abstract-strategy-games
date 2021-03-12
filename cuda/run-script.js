@@ -22,8 +22,6 @@ if (!fs.existsSync(path.join(cudaDir, 'node_modules'))) {
     shell: process.platform === 'win32',
     stdio: 'inherit'
   });
-  console.log('node_modules installed, restart as user...');
-  process.exit(0);
 }
 
 
@@ -42,28 +40,28 @@ try {
     from: '@tensorflow/tfjs',
     to: '@tensorflow/tfjs-node-gpu'
   });
-  console.log('@tensorflow/tfjs -> @tensorflow/tfjs-node-gpu', tfjs
-    .filter(result => result.hasChanged)
-    .map(result => result.file)
-  );
+  // console.log('@tensorflow/tfjs -> @tensorflow/tfjs-node-gpu', tfjs
+  //   .filter(result => result.hasChanged)
+  //   .map(result => result.file)
+  // );
   const api = replace.sync({
     files: `${cudaDir}/build/**/*.js`,
     from: '/lib/api',
     to: '/lib/api-node'
   });
-  console.log('/lib/api -> /lib/api-node', api
-    .filter(result => result.hasChanged)
-    .map(result => result.file)
-  );
+  // console.log('/lib/api -> /lib/api-node', api
+  //   .filter(result => result.hasChanged)
+  //   .map(result => result.file)
+  // );
   const css = replace.sync({
     files: `${cudaDir}/build/**/*.js`,
     from: /require.+css.*/,
     to: '//$&'
   });
-  console.log('require(*.css); -> //require(*.css);', css
-    .filter(result => result.hasChanged)
-    .map(result => result.file)
-  );
+  // console.log('require(*.css); -> //require(*.css);', css
+  //   .filter(result => result.hasChanged)
+  //   .map(result => result.file)
+  // );
 }
 catch (error) {
   console.error('Error occurred:', error);

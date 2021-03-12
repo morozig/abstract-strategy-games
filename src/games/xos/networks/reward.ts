@@ -6,12 +6,12 @@ import {
     convLayer2D
 } from '../../../lib/networks';
 
-const numFilters = 128;
+const numFilters = 64;
 const numLayers = 5;
 const batchSize = 1024;
 const epochs = 10;
-const learningRate = 0.01;
-const dropout = 0.3;
+const learningRate = 0.05;
+const dropout = 0.1;
 
 interface TfNetworkOptions {
   height: number;
@@ -30,7 +30,8 @@ export default class Reward implements TfNetwork {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
-    const optimizer = tf.train.adam(learningRate);
+    // const optimizer = tf.train.adam(learningRate);
+    const optimizer = tf.train.sgd(learningRate);
     this.compileArgs = {
       optimizer: optimizer,
       loss: tf.losses.meanSquaredError
@@ -47,7 +48,7 @@ export default class Reward implements TfNetwork {
   
     let reward = convLayer2D(network, {
       name: 'rewardConv',
-      numFilters: 1,
+      numFilters: 2,
       kernelSize: 1,
       padding: 'same',
       dropout: dropout
@@ -58,7 +59,7 @@ export default class Reward implements TfNetwork {
   
     reward = denseLayer(reward, {
       name: 'rewardDense',
-      units: 20,
+      units: this.height * this.width,
       dropout
     });
 

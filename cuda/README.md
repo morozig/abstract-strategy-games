@@ -79,6 +79,8 @@ docker run --gpus all \
 --rm \
 -it \
 -v $(pwd):/app \
+-v $(pwd)/cuda/volumes/.npm:/.npm \
+-v $(pwd)/cuda/volumes/.config:/.config \
 -w=/app \
 tfjs-node-gpu \
 npm run cuda

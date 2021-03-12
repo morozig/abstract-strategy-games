@@ -7,12 +7,12 @@ import {
     kld
 } from '../../../lib/networks';
 
-const numFilters = 128;
+const numFilters = 64;
 const numLayers = 5;
 const batchSize = 1024;
 const epochs = 15;
-const learningRate = 0.01;
-const dropout = 0.3;
+const learningRate = 0.05;
+const dropout = 0.1;
 
 interface TfNetworkOptions {
   height: number;
@@ -31,7 +31,8 @@ export default class Policy implements TfNetwork {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
-    const optimizer = tf.train.adam(learningRate);
+    // const optimizer = tf.train.adam(learningRate);
+    const optimizer = tf.train.sgd(learningRate);
     this.compileArgs = {
       optimizer: optimizer,
       loss: kld
