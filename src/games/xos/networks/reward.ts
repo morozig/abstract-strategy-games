@@ -37,43 +37,47 @@ export default class Reward implements TfNetwork {
       loss: tf.losses.meanSquaredError
     };
   }
-  graph(input: tf.SymbolicTensor) {
-    let network = residualNetwork2D(input, {
-      numLayers,
-      numFilters,
-      kernelSize: 3,
-      namePrefix: 'reward',
-      dropout: dropout
-    });
+  createGraph(id?: number) {
+    const namePrefix = id ?
+      `reward${id}` : 'reward';
+    return (input: tf.SymbolicTensor) => {
+      let network = residualNetwork2D(input, {
+        numLayers,
+        numFilters,
+        kernelSize: 3,
+        namePrefix,
+        dropout: dropout
+      });
+    
+      let reward = convLayer2D(network, {
+        name: `${namePrefix}Conv`,
+        numFilters: 2,
+        kernelSize: 1,
+        padding: 'same',
+        dropout: dropout
+      });
+    
+      reward = tf.layers.flatten(
+      ).apply(reward) as tf.SymbolicTensor;
+    
+      reward = denseLayer(reward, {
+        name: `${namePrefix}Dense`,
+        units: this.height * this.width,
+        dropout
+      });
   
-    let reward = convLayer2D(network, {
-      name: 'rewardConv',
-      numFilters: 2,
-      kernelSize: 1,
-      padding: 'same',
-      dropout: dropout
-    });
-  
-    reward = tf.layers.flatten(
-    ).apply(reward) as tf.SymbolicTensor;
-  
-    reward = denseLayer(reward, {
-      name: 'rewardDense',
-      units: this.height * this.width,
-      dropout
-    });
-
-    reward = denseLayer(reward, {
-      name: 'rewardDenseHead',
-      units: 1,
-      dropout,
-      noActivation: true
-    });
-  
-    reward = tf.layers.activation({
-      activation: 'tanh',
-      name: 'reward'
-    }).apply(reward) as tf.SymbolicTensor;
-    return reward;
+      reward = denseLayer(reward, {
+        name: `${namePrefix}DenseHead`,
+        units: 1,
+        dropout,
+        noActivation: true
+      });
+    
+      reward = tf.layers.activation({
+        activation: 'tanh',
+        name: namePrefix
+      }).apply(reward) as tf.SymbolicTensor;
+      return reward;
+    };
   }
 };

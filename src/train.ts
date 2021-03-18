@@ -16,7 +16,7 @@ import GameClass from './games/xos';
 import { GamePlayerType } from './interfaces/game-player';
 // import { GamePlayerType } from './interfaces/game-player';
 
-const winRate = 0.6;
+const winRate = 0.55;
 
 const trainGeneration = async (
   game: Game,
@@ -34,6 +34,7 @@ const trainGeneration = async (
   )?.planCount || game.rules.actionsCount; 
   const previousGeneration = generation - 1;
   const previousModelName = `alpha-${previousGeneration}`;
+
   const previousModel = game.createModel();
   const model = game.createModel();
 

@@ -38,43 +38,47 @@ export default class Policy implements TfNetwork {
       loss: kld
     };
   }
-  graph(input: tf.SymbolicTensor) {
-    let network = residualNetwork2D(input, {
-      numLayers,
-      numFilters,
-      kernelSize: 3,
-      namePrefix: 'policy',
-      dropout: dropout
-    });
+  createGraph(id?: number) {
+    const namePrefix = id ?
+      `policy${id}` : 'policy';
+    return (input: tf.SymbolicTensor) => {
+      let network = residualNetwork2D(input, {
+        numLayers,
+        numFilters,
+        kernelSize: 3,
+        namePrefix,
+        dropout: dropout
+      });
+    
+      let policy = convLayer2D(network, {
+        name: `${namePrefix}Conv`,
+        numFilters: 2,
+        kernelSize: 1,
+        padding: 'same',
+        dropout: dropout
+      })
+    
+      policy = tf.layers.flatten(
+      ).apply(policy) as tf.SymbolicTensor;
+    
+      policy = denseLayer(policy, {
+        name: `${namePrefix}Dense`,
+        units: 2 * this.height * this.width,
+        dropout
+      });
   
-    let policy = convLayer2D(network, {
-      name: 'policyConv',
-      numFilters: 2,
-      kernelSize: 1,
-      padding: 'same',
-      dropout: dropout
-    })
-  
-    policy = tf.layers.flatten(
-    ).apply(policy) as tf.SymbolicTensor;
-  
-    policy = denseLayer(policy, {
-      name: 'policyDense',
-      units: 2 * this.height * this.width,
-      dropout
-    });
-
-    policy = denseLayer(policy, {
-      name: 'policyDenseHead',
-      units: this.height * this.width,
-      dropout,
-      noActivation: true
-    });
-  
-    policy = tf.layers.activation({
-      activation: 'softmax',
-      name: 'policy'
-    }).apply(policy) as tf.SymbolicTensor;
-    return policy;
+      policy = denseLayer(policy, {
+        name: `${namePrefix}DenseHead`,
+        units: this.height * this.width,
+        dropout,
+        noActivation: true
+      });
+    
+      policy = tf.layers.activation({
+        activation: 'softmax',
+        name: namePrefix
+      }).apply(policy) as tf.SymbolicTensor;
+      return policy;
+    };
   }
 };
