@@ -25,7 +25,8 @@ interface OutputsResponse {
 export interface PlayWorkerOptions {
   gameName?: string;
   modelsIndices?: number[];
-  temp?: number;
+  planCount: number;
+  randomTurnsCount?: number;
 };
 
 export type PlayWorkerType = {
@@ -40,8 +41,7 @@ type PredictBatchResolver = (
 ) => void;
 
 const createPlayWorker = (
-  gameRules: GameRules,
-  planCount: number
+  gameRules: GameRules
 ) => {
   const inputsSubject = new Subject<InputsRequest>();
   const queue = [] as PredictBatchResolver[];
@@ -142,23 +142,23 @@ const createPlayWorker = (
         [
           new Mcts({
             gameRules: gameRules,
-            planCount: planCount,
+            planCount: options.planCount,
             predict: (history: number[]) => predict(
               history,
               options.modelsIndices && options.modelsIndices[0]
             ),
             randomize: true,
-            temp: options.temp
+            randomTurnsCount: options.randomTurnsCount
           }),
           new Mcts({
             gameRules: gameRules,
-            planCount: planCount,
+            planCount: options.planCount,
             predict: (history: number[]) => predict(
               history,
               options.modelsIndices && options.modelsIndices[1]
             ),
             randomize: true,
-            temp: options.temp
+            randomTurnsCount: options.randomTurnsCount
           }),
         ],
         options.gameName

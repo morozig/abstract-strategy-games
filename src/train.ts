@@ -31,7 +31,8 @@ const trainGeneration = async (
   // const rules = game.rules;
   const planCount = game.players.find(
     player => player.type === GamePlayerType.Alpha
-  )?.planCount || game.rules.actionsCount; 
+  )?.planCount || game.rules.actionsCount;
+  const randomTurnsCount = game.randomTurnsCount;
   const previousGeneration = generation - 1;
   const previousModelName = `alpha-${previousGeneration}`;
 
@@ -59,7 +60,8 @@ const trainGeneration = async (
       model,
       gamesCount: 5000,
       averageTurns: 20,
-      planCount
+      planCount,
+      randomTurnsCount
     });
 
     for (let gameHistory of gameHistories) {
@@ -85,7 +87,8 @@ const trainGeneration = async (
     ],
     gamesCount,
     averageTurns: 20,
-    planCount
+    planCount,
+    randomTurnsCount
   });
   const player1Won = contest
     .slice(0, gamesCount)

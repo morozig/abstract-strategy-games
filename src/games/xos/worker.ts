@@ -4,6 +4,6 @@ import config from './config.json';
 import Rules from './rules';
 
 const rules = new Rules(config.height, config.width, config.same);
-const worker = createPlayWorker(rules, config.planCount);
+const worker = createPlayWorker(rules);
 
 expose(worker);

@@ -14,8 +14,9 @@ import PolicyAction from '../../interfaces/policy-action';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
 import GameHistory from '../../interfaces/game-history';
 
-const historyDepth = 2;
+const historyDepth = 1;
 const useColor = true;
+const useEmptyTiles = true;
 
 const copy = (board: Board) => board.map(row => row.slice()) as Board;
 
@@ -31,7 +32,9 @@ export default class Rules implements GameRules {
     this.width = width;
     this.same = same;
     this.actionsCount = height * width;
-    this.depth = 2 * historyDepth + (useColor ? 1 : 0);
+    this.depth = 2 * historyDepth +
+      (useColor ? 2 : 0) +
+      (useEmptyTiles ? 1 : 0);
   }
   step(state: State, action: number) {
     if (!this.availables(state).includes(action)){
@@ -113,18 +116,17 @@ export default class Rules implements GameRules {
       input.push([]);
       for (let j = 0; j < this.width; j++) {
         input[i].push([]);
-        const color = 1 - playerIndex;
         const playerHistory = states
           .filter(state => state.playerIndex === enemyIndex)
           .map(state => (
-              state.board[i][j] === playerTile ? 1 : 0
+            state.board[i][j] === playerTile ? 1 : 0
           ))
           .reverse()
           .slice(0, historyDepth) as number[];
         const enemyHistory = states
           .filter(state => state.playerIndex === playerIndex)
           .map(state => (
-              state.board[i][j] === enemyTile ? 1 : 0
+            state.board[i][j] === enemyTile ? 1 : 0
           ))
           .reverse()
           .slice(0, historyDepth) as number[];
@@ -146,11 +148,18 @@ export default class Rules implements GameRules {
             emptyEnemyHistory.push(0);
           }
         }
+        const emptyTile = lastState.board[i][j] === Tile.Empty ?
+          [ 1 ] : [ 0 ];
+
+        const color = playerIndex === 0 ?
+          [ 1, 0 ] :
+          [ 0, 1 ];
         input[i][j] = playerHistory.concat(
           emptyPlayerHistory,
           enemyHistory,
           emptyEnemyHistory,
-          useColor ? [color] : []
+          useEmptyTiles ? emptyTile : [],
+          useColor ? color : []
         );
       }
     }

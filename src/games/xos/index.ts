@@ -28,9 +28,10 @@ export default class Xos implements Game {
     {
       type: GamePlayerType.Alpha,
       planCount: config.planCount,
-      modelName: 'mcts-5000'
+      modelName: 'alpha-5'
     },
   ] as GamePlayer[];
+  readonly randomTurnsCount = 6;
   constructor() {
     this.name = `xos${this.height}${this.width}${this.same}`;
     this.title = `${this.height},${this.width},${this.same}-game`;

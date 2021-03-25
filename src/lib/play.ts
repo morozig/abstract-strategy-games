@@ -15,8 +15,6 @@ import Batcher from './batcher';
 import { TypedInput } from './alpha-network';
 import ProgressBar from './progress-bar';
 
-const temp = 0.1;
-
 const getStates = (history: number[], rules: GameRules) => {
   const initial = rules.init();
   const states = [initial];
@@ -72,6 +70,7 @@ interface PlaySelfAlphaOptions {
   gamesCount: number;
   averageTurns: number;
   planCount: number;
+  randomTurnsCount?: number;
 }
 
 const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
@@ -80,7 +79,8 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     createWorker,
     gamesCount,
     averageTurns,
-    planCount
+    planCount,
+    randomTurnsCount
   } = options;
 
   // const size = 3;
@@ -170,7 +170,9 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   for (let i = 0; i < gamesCount; i++) {
     pool.queue(async worker => {
       const gameHistory = await worker.play({
-        gameName: `${i}`
+        gameName: `${i}`,
+        planCount,
+        randomTurnsCount
       });
       const turnsDelta = Math.max(
         averageTurns - gameHistory.history.length,
@@ -212,6 +214,7 @@ interface PlayContestAlphaOptions {
   gamesCount: number;
   averageTurns: number;
   planCount: number;
+  randomTurnsCount?: number;
 }
 
 const playContestAlpha = async (options: PlayContestAlphaOptions) => {
@@ -220,7 +223,8 @@ const playContestAlpha = async (options: PlayContestAlphaOptions) => {
     createWorker,
     gamesCount,
     averageTurns,
-    planCount
+    planCount,
+    randomTurnsCount
   } = options;
 
   // const size = 3;
@@ -320,7 +324,8 @@ const playContestAlpha = async (options: PlayContestAlphaOptions) => {
       const gameHistory = await worker.play({
         gameName: `${i}`,
         modelsIndices: [0, 1],
-        temp
+        planCount,
+        randomTurnsCount
       });
       const turnsDelta = Math.max(
         averageTurns - gameHistory.history.length,
@@ -340,7 +345,8 @@ const playContestAlpha = async (options: PlayContestAlphaOptions) => {
       const gameHistory = await worker.play({
         gameName: `${i}`,
         modelsIndices: [1, 0],
-        temp
+        planCount,
+        randomTurnsCount
       });
       const turnsDelta = Math.max(
         averageTurns - gameHistory.history.length,

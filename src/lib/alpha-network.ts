@@ -14,7 +14,7 @@ const trainOrder = [
 //   'policy',
 //   'reward'
 // ];
-const ensembleSize = 8;
+const ensembleSize = 4;
 
 export type TypedInput = Float32Array;
 export type TypedOutput = [Float32Array, Float32Array];

@@ -8,8 +8,8 @@ import {
 import PolicyAgent from '../interfaces/policy-agent';
 import GameState from '../interfaces/game-state';
 
-const cPuct = 4;
-// const randomizeTemp = 0.1;
+const cPuct = 5;
+const finishTemp = 0.1;
 const printPolicy = false;
 
 export type Predictor = (history: number[]) => Promise<GamePrediction>;
@@ -19,7 +19,7 @@ interface MctsOptions {
   predict?: Predictor;
   planCount?: number;
   randomize?: boolean;
-  temp?: number;
+  randomTurnsCount?: number;
 }
 
 const defaultPredictor = (gameRules: GameRules) => {
@@ -148,7 +148,7 @@ export default class Mcts implements PolicyAgent{
   private predict: Predictor;
   private planCount: number;
   private randomize: boolean;
-  private temp?: number;
+  private randomTurnsCount?: number;
   private root: Node;
   private rootHistory: number[];
   constructor(options: MctsOptions) {
@@ -158,7 +158,8 @@ export default class Mcts implements PolicyAgent{
     this.planCount = options.planCount ?
       options.planCount : options.gameRules.actionsCount;
     this.randomize = !!options.randomize;
-    this.temp = options.temp;
+    this.randomTurnsCount = options.randomTurnsCount;
+    
     this.root = new Node({
       parent: null,
       action: 0,
@@ -186,8 +187,13 @@ export default class Mcts implements PolicyAgent{
       this.root.children.map(
         child => child.prob
       )
+    const temp = (
+      this.randomTurnsCount &&
+      this.rootHistory.length >= this.randomTurnsCount
+    ) ? finishTemp : undefined;
+
     const index = this.randomize ?
-      indexSoftMax(probs, this.temp) :
+      indexSoftMax(probs, temp) :
       indexMax(probs);
     const action = this.root.children[index].action;
     for (let i = 0; i < this.root.children.length; i++) {
