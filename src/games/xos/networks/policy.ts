@@ -1,18 +1,21 @@
 import * as tf from '@tensorflow/tfjs';
 import { TfNetwork } from '../../../lib/alpha-network';
 import {
-    residualNetwork2D,
-    denseLayer,
-    convLayer2D,
-    kld
+    kld,
+    transformer
 } from '../../../lib/networks';
 
-const numFilters = 64;
+const dim = 64;
+const numHeads = 4;
+const mlpUnits = [ dim * 2, dim ];
 const numLayers = 5;
-const batchSize = 1024;
+const dropout = 0.1;
+const headDim = 2;
+const headMlpUnits = [ 1024, 512 ];
+const headDropout = 0.5;
+const batchSize = 64;
 const epochs = 15;
 const learningRate = 0.05;
-const dropout = 0.1;
 
 interface TfNetworkOptions {
   height: number;
@@ -31,8 +34,8 @@ export default class Policy implements TfNetwork {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
-    // const optimizer = tf.train.adam(learningRate);
-    const optimizer = tf.train.sgd(learningRate);
+    const optimizer = tf.train.adam(learningRate);
+    // const optimizer = tf.train.sgd(learningRate);
     this.compileArgs = {
       optimizer: optimizer,
       loss: kld
@@ -41,43 +44,25 @@ export default class Policy implements TfNetwork {
   createGraph(id?: number) {
     const namePrefix = id ?
       `policy${id}` : 'policy';
+    const numTiles = this.width * this.height;
     return (input: tf.SymbolicTensor) => {
-      let network = residualNetwork2D(input, {
+      let network = transformer(input, {
+        dim,
+        numHeads,
+        numTiles,
+        mlpUnits,
         numLayers,
-        numFilters,
-        kernelSize: 3,
-        namePrefix,
-        dropout: dropout
-      });
-    
-      let policy = convLayer2D(network, {
-        name: `${namePrefix}Conv`,
-        numFilters: 2,
-        kernelSize: 1,
-        padding: 'same',
-        dropout: dropout
-      })
-    
-      policy = tf.layers.flatten(
-      ).apply(policy) as tf.SymbolicTensor;
-    
-      policy = denseLayer(policy, {
-        name: `${namePrefix}Dense`,
-        units: 2 * this.height * this.width,
-        dropout
-      });
-  
-      policy = denseLayer(policy, {
-        name: `${namePrefix}DenseHead`,
-        units: this.height * this.width,
         dropout,
-        noActivation: true
+        headDim,
+        headMlpUnits,
+        headDropout,
+        namePrefix
       });
-    
-      policy = tf.layers.activation({
-        activation: 'softmax',
-        name: namePrefix
-      }).apply(policy) as tf.SymbolicTensor;
+
+      let policy = tf.layers.dense({
+        units: numTiles,
+        activation: 'softmax'
+      }).apply(network) as tf.SymbolicTensor;
       return policy;
     };
   }

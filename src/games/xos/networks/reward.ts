@@ -1,17 +1,20 @@
 import * as tf from '@tensorflow/tfjs';
 import { TfNetwork } from '../../../lib/alpha-network';
 import {
-    residualNetwork2D,
-    denseLayer,
-    convLayer2D
+    transformer
 } from '../../../lib/networks';
 
-const numFilters = 64;
+const dim = 32;
+const numHeads = 2;
+const mlpUnits = [ dim ];
 const numLayers = 5;
+const dropout = 0.1;
+const headDim = 2;
+const headMlpUnits = [ 128, 64 ];
+const headDropout = 0.5;
 const batchSize = 1024;
 const epochs = 10;
 const learningRate = 0.05;
-const dropout = 0.1;
 
 interface TfNetworkOptions {
   height: number;
@@ -30,8 +33,8 @@ export default class Reward implements TfNetwork {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
-    // const optimizer = tf.train.adam(learningRate);
-    const optimizer = tf.train.sgd(learningRate);
+    const optimizer = tf.train.adam(learningRate);
+    // const optimizer = tf.train.sgd(learningRate);
     this.compileArgs = {
       optimizer: optimizer,
       loss: tf.losses.meanSquaredError
@@ -40,43 +43,25 @@ export default class Reward implements TfNetwork {
   createGraph(id?: number) {
     const namePrefix = id ?
       `reward${id}` : 'reward';
+    const numTiles = this.width * this.height;
     return (input: tf.SymbolicTensor) => {
-      let network = residualNetwork2D(input, {
+      let network = transformer(input, {
+        dim,
+        numHeads,
+        numTiles,
+        mlpUnits,
         numLayers,
-        numFilters,
-        kernelSize: 3,
-        namePrefix,
-        dropout: dropout
-      });
-    
-      let reward = convLayer2D(network, {
-        name: `${namePrefix}Conv`,
-        numFilters: 2,
-        kernelSize: 1,
-        padding: 'same',
-        dropout: dropout
-      });
-    
-      reward = tf.layers.flatten(
-      ).apply(reward) as tf.SymbolicTensor;
-    
-      reward = denseLayer(reward, {
-        name: `${namePrefix}Dense`,
-        units: this.height * this.width,
-        dropout
-      });
-  
-      reward = denseLayer(reward, {
-        name: `${namePrefix}DenseHead`,
-        units: 1,
         dropout,
-        noActivation: true
+        headDim,
+        headMlpUnits,
+        headDropout,
+        namePrefix
       });
-    
-      reward = tf.layers.activation({
-        activation: 'tanh',
-        name: namePrefix
-      }).apply(reward) as tf.SymbolicTensor;
+
+      let reward = tf.layers.dense({
+        units: 1,
+        activation: 'tanh'
+      }).apply(network) as tf.SymbolicTensor;
       return reward;
     };
   }
