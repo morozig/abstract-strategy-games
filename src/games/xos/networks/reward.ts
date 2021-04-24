@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import { TfNetwork } from '../../../lib/alpha-network';
+// import { TfGraph } from '../../../lib/alpha-network';
 import {
     residualNetwork2D,
     denseLayer,
@@ -19,7 +19,7 @@ interface TfNetworkOptions {
   depth: number;
 }
 
-export default class Reward implements TfNetwork {
+export default class Reward {
   private height: number;
   private width: number;
   private depth: number;
@@ -37,7 +37,7 @@ export default class Reward implements TfNetwork {
       loss: tf.losses.meanSquaredError
     };
   }
-  createGraph(id?: number) {
+  createCommon(id?: number) {
     const namePrefix = id ?
       `reward${id}` : 'reward';
     return (input: tf.SymbolicTensor) => {

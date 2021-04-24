@@ -7,60 +7,60 @@ import {
 import { copyWeights } from './networks';
 
 const trainOrder = [
-  'reward',
   'policy',
+  'reward'
 ];
-// const trainOrder = [
-//   'policy',
-//   'reward'
-// ];
 const ensembleSize = 4;
 
 export type TypedInput = Float32Array;
 export type TypedOutput = [Float32Array, Float32Array];
 
-export interface TfNetwork {
-  readonly createGraph: (id?: number) =>
-    (input: tf.SymbolicTensor) => tf.SymbolicTensor;
+export type GraphCreator = (id?: number) =>
+  (input: tf.SymbolicTensor) => tf.SymbolicTensor;
+
+export type CompileArgsCreator = () => tf.ModelCompileArgs;
+export interface TfGraph {
+  readonly createCommon: GraphCreator;
+  readonly createPolicy: GraphCreator;
+  readonly createReward: GraphCreator;
+  readonly policyCompileArgsCreator: CompileArgsCreator;
+  readonly rewardCompileArgsCreator: CompileArgsCreator;
   readonly batchSize: number;
   readonly epochs: number;
-  readonly compileArgs: tf.ModelCompileArgs;
 };
 
 export interface AlphaNetworkOptions {
   height: number;
   width: number;
   depth: number;
-  policy: TfNetwork;
-  reward: TfNetwork;
+  graph: TfGraph;
 };
 
 export default class AlphaNetwork {
   private height: number;
   private width: number;
   private depth: number;
-  private policy: TfNetwork;
-  private reward: TfNetwork;
+  private graph: TfGraph;
   private model: tf.LayersModel;
   constructor(options: AlphaNetworkOptions) {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
-    this.policy = options.policy;
-    this.reward = options.reward;
+    this.graph = options.graph;
     const input = tf.input({
       shape: [this.height, this.width, this.depth]
     });
-    const policyHeads = new Array(ensembleSize)
+    const commonNetworks = new Array(ensembleSize)
       .fill(undefined)
-      .map((_, i) => this.policy.createGraph(i + 1)(input));
+      .map((_, i) => this.graph.createCommon(i + 1)(input));
+    const policyHeads = commonNetworks
+      .map((network, i) => this.graph.createPolicy(i + 1)(network));
     const policyAverage = tf.layers.average({
       name: 'policy'
     }).apply(policyHeads) as tf.SymbolicTensor;
 
-    const rewardHeads = new Array(ensembleSize)
-      .fill(undefined)
-      .map((_, i) => this.reward.createGraph(i + 1)(input));
+    const rewardHeads = commonNetworks
+      .map((network, i) => this.graph.createReward(i + 1)(network));
     const rewardAverage = tf.layers.average({
       name: 'reward'
     }).apply(rewardHeads) as tf.SymbolicTensor;
@@ -80,48 +80,58 @@ export default class AlphaNetwork {
     outputs: Output[]
   ){
     const xsTensor = tf.tensor4d(inputs);
-    const input = tf.input({
-      shape: [this.height, this.width, this.depth]
-    });
     const losses = [] as number[];
 
-    for (let task of trainOrder) {
-      const taskLosses = [] as number[];
-      for (let i = 1; i <= ensembleSize; i++) {
-        console.log(`training ${task}${i} model...`);
-        const headNetwork = task === 'policy' ?
-          this.policy : this.reward;
-        const ysTensor = tf.tensor2d(outputs.map(
-          output => task === 'policy' ?
-            output[0] : [output[1]]
-        ));
-        const headModel = tf.model(
-          {
-            inputs: input,
-            outputs: headNetwork.createGraph(i)(input)
-          }
-        );
-        copyWeights(this.model, headModel);
-        headModel.compile(headNetwork.compileArgs);
-        const headHistory = await headModel.fit(
-          xsTensor,
-          ysTensor,
-          {
-            batchSize: headNetwork.batchSize,
-            epochs: headNetwork.epochs,
-            shuffle: true,
-            validationSplit: 0.01
-          }
-        );
-        ysTensor.dispose();
-        const headLoss = headHistory.history.val_loss[
-          headNetwork.epochs - 1
-        ] as number;
-        taskLosses.push(headLoss);
-        copyWeights(headModel, this.model);
+    for (let i = 1; i <= ensembleSize; i++) {
+      const epochsLosses = [] as number[];
+      for (let j = 1; j <= this.graph.epochs; j++) {
+        for (let task of trainOrder) {
+          console.log(`training ${task}${i} epoch${j}...`);
+          const ysTensor = tf.tensor2d(outputs.map(
+            output => task === 'policy' ?
+              output[0] : [output[1]]
+          ));
+          const input = tf.input({
+            shape: [this.height, this.width, this.depth]
+          });
+          const commonNetwork = this.graph.createCommon(i + 1)(input);
+          const headNetwork = task === 'policy' ?
+            this.graph.createPolicy(i + 1)(commonNetwork) :
+            this.graph.createReward(i + 1)(commonNetwork);
+          const taskModel = tf.model(
+            {
+              inputs: input,
+              outputs: headNetwork
+            }
+          );
+          taskModel.compile(task === 'policy' ?
+            this.graph.policyCompileArgsCreator() :
+            this.graph.rewardCompileArgsCreator()
+          );
+          copyWeights(this.model, taskModel);
+          
+          const taskHistory = await taskModel.fit(
+            xsTensor,
+            ysTensor,
+            {
+              batchSize: this.graph.batchSize,
+              epochs: 1,
+              shuffle: true,
+              validationSplit: 0.01
+            }
+          );
+          ysTensor.dispose();
+          const taskLoss = taskHistory.history.val_loss[
+            0
+          ] as number;
+          epochsLosses.push(taskLoss);
+          copyWeights(taskModel, this.model);
+        }
       }
       losses.push(
-        taskLosses.reduce(
+        epochsLosses
+        .slice(-2)
+        .reduce(
           (total, current) => total + current, 0
         ) / ensembleSize
       )

@@ -67,10 +67,10 @@ const residualLayer2D = (
   });
 
   network = tf.layers.add()
-    .apply([network, input]) as tf.SymbolicTensor;;
+    .apply([network, input]) as tf.SymbolicTensor;
   network = tf.layers.activation({
     activation: 'relu'
-  }).apply(network) as tf.SymbolicTensor;;
+  }).apply(network) as tf.SymbolicTensor;
   return network;
 };
 
@@ -178,11 +178,78 @@ const kld = (
   return tf.losses.computeWeightedLoss(loss, weights, reduction);
 }
 
+const xception = (
+  input: tf.SymbolicTensor,
+  options: {
+    numLayers: number;
+    name?: string;
+  }
+) => {
+  const {
+    name = '',
+    numLayers
+  } = options;
+
+  let network = input;
+  network = tf.layers.conv2d({
+    filters: 64,
+    kernelSize: 3,
+    strides: 1,
+    padding: 'same',
+    name: `${name}encConv1`,
+  }).apply(network) as tf.SymbolicTensor;
+  network = tf.layers.batchNormalization({
+    name: `${name}encBn1`,
+  }).apply(network) as tf.SymbolicTensor;
+  network = tf.layers.activation({
+    activation: 'relu'
+  }).apply(network) as tf.SymbolicTensor;
+  network = tf.layers.separableConv2d({
+    filters: 128,
+    kernelSize: 3,
+    strides: 1,
+    padding: 'same',
+    name: `${name}encConv2`,
+  }).apply(network) as tf.SymbolicTensor;
+  network = tf.layers.batchNormalization({
+    name: `${name}encBn2`,
+  }).apply(network) as tf.SymbolicTensor;
+
+  for (let i = 1; i <= numLayers; i++) {
+    const resId = i <= numLayers / 2 ?
+      `${i}` :
+      `${i - numLayers - 1}`;
+    let res = network;
+    for (let j = 1; j <= 3; j++) {
+      res = tf.layers.activation({
+        activation: 'relu'
+      }).apply(res) as tf.SymbolicTensor;
+      res = tf.layers.separableConv2d({
+        filters: 128,
+        kernelSize: 3,
+        strides: 1,
+        padding: 'same',
+        name: `${name}res${resId}Conv${j}`,
+      }).apply(res) as tf.SymbolicTensor;
+      res = tf.layers.batchNormalization({
+        name: `${name}res${resId}Bn${j}`,
+      }).apply(res) as tf.SymbolicTensor;
+    }
+    network = tf.layers.add(
+    ).apply([network, res]) as tf.SymbolicTensor;
+  }
+  network = tf.layers.activation({
+    activation: 'relu'
+  }).apply(network) as tf.SymbolicTensor
+  return network;
+};
+
 export {
   convLayer2D,
   residualNetwork2D,
   copyWeights,
   countResidualLayers,
   denseLayer,
-  kld
+  kld,
+  xception
 }

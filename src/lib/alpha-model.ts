@@ -4,32 +4,28 @@ import GameRules, {
   Output,
   Pair
 } from '../interfaces/game-rules';
-import AlphaNetwork, { TfNetwork, TypedInput } from './alpha-network';
+import AlphaNetwork, { TfGraph, TypedInput } from './alpha-network';
 
 interface AlphaModelOptions {
   gameName: string;
   rules: GameRules,
-  policy: TfNetwork;
-  reward: TfNetwork;
+  graph: TfGraph;
 };
 
 export default class AlphaModel {
   private gameName: string;
   private rules: GameRules;
-  private policy: TfNetwork;
-  private reward: TfNetwork;
+  private graph: TfGraph;
   private network: AlphaNetwork;
   constructor(options: AlphaModelOptions) {
     this.gameName = options.gameName;
     this.rules = options.rules;
-    this.policy = options.policy;
-    this.reward = options.reward;
+    this.graph = options.graph;
     this.network = new AlphaNetwork({
       height: this.rules.height,
       width: this.rules.width,
       depth: this.rules.depth,
-      policy: this.policy,
-      reward: this.reward
+      graph: this.graph
     });
   }
   async train(
