@@ -71,5 +71,9 @@ console.log('starting training');
 spawnSync('node', ['cuda/build/cuda/index.js'], {
   cwd: rootDir,
   shell: process.platform === 'win32',
-  stdio: 'inherit'
+  stdio: 'inherit',
+  env: {
+    NODE_OPTIONS: '--max_old_space_size=8192',
+    ...process.env
+  }
 });
