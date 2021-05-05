@@ -11,6 +11,7 @@ const trainOrder = [
   'reward'
 ];
 const ensembleSize = 4;
+const validationSplit = 0.01;
 
 export type TypedInput = Float32Array;
 export type TypedOutput = [Float32Array, Float32Array];
@@ -29,6 +30,34 @@ export interface TfGraph {
   readonly epochs: number;
 };
 
+const randomAugment = (input: Input) => {
+  const isColorDrop = Math.random() < 0.5;
+  const isPositionDrop = !isColorDrop;
+
+  const height = input.length;
+  const width = input[0].length;
+  const depth = input[0][0].length;
+
+  const iDrop = isPositionDrop ?
+    Math.floor(Math.random() * height) : -1;
+  const jDrop = isPositionDrop ?
+    Math.floor(Math.random() * width) : -1;
+  const zDrop = isColorDrop ?
+    Math.floor(Math.random() * depth) : -1;
+
+  return input.map(
+    (row, i) => row.map(
+      (column, j) => column.map(
+        (value, z) => isColorDrop ?
+          (z === zDrop) ?
+            0 : value
+          :
+          (i === iDrop && j === jDrop) ?
+            0 : value
+      )
+    )
+  ) as Input;
+};
 export interface AlphaNetworkOptions {
   height: number;
   width: number;
@@ -79,15 +108,28 @@ export default class AlphaNetwork {
     inputs: Input[],
     outputs: Output[]
   ){
-    const xsTensor = tf.tensor4d(inputs);
+    const valSplit = Math.floor(inputs.length * validationSplit);
+    const trainInputs = inputs.slice(0, -valSplit);
+    const valInputs = inputs.slice(-valSplit);
+    const trainOutputs = outputs.slice(0, -valSplit);
+    const valOutputs = outputs.slice(-valSplit);
+
     const losses = [] as number[];
 
     for (let i = 1; i <= ensembleSize; i++) {
       const epochsLosses = [] as number[];
+      const epochTrainOrder = trainOrder.slice();
+      if (i % 2 === 0) epochTrainOrder.reverse();
       for (let j = 1; j <= this.graph.epochs; j++) {
-        for (let task of trainOrder) {
+        for (let task of epochTrainOrder) {
           console.log(`training ${task}${i} epoch${j}...`);
-          const ysTensor = tf.tensor2d(outputs.map(
+          const xsTensor = tf.tensor4d(trainInputs.map(randomAugment));
+          const ysTensor = tf.tensor2d(trainOutputs.map(
+            output => task === 'policy' ?
+              output[0] : [output[1]]
+          ));
+          const valXsTensor = tf.tensor4d(valInputs);
+          const valYsTensor = tf.tensor2d(valOutputs.map(
             output => task === 'policy' ?
               output[0] : [output[1]]
           ));
@@ -109,18 +151,25 @@ export default class AlphaNetwork {
             this.graph.rewardCompileArgsCreator()
           );
           copyWeights(this.model, taskModel);
-          
+          const epochs = task === 'policy' ? 2 : 1;
+
           const taskHistory = await taskModel.fit(
             xsTensor,
             ysTensor,
             {
               batchSize: this.graph.batchSize,
-              epochs: 1,
+              epochs,
               shuffle: true,
-              validationSplit: 0.01
+              validationData: [
+                valXsTensor,
+                valYsTensor
+              ]
             }
           );
+          xsTensor.dispose();
           ysTensor.dispose();
+          valXsTensor.dispose();
+          valYsTensor.dispose();
           const taskLoss = taskHistory.history.val_loss[
             0
           ] as number;
@@ -137,7 +186,6 @@ export default class AlphaNetwork {
       )
     }
 
-    xsTensor.dispose();
     const loss = losses.reduce((total, current) => total + current, 0);
     console.log('loss:', loss.toPrecision(3));
     return loss;

@@ -76,6 +76,7 @@ npm run cuda
 
 docker run --gpus all \
 -u $(id -u):$(id -g) \
+--name asg \
 --rm \
 -it \
 -v $(pwd):/app \
