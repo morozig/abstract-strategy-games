@@ -77,24 +77,22 @@ export default class Xception implements TfGraph {
     const name = id ?
       `reward${id}` : 'reward';
     return (common: tf.SymbolicTensor) => {
-      let reward = tf.layers.globalAveragePooling2d({
+      let reward = tf.layers.separableConv2d({
+        filters: 2,
+        kernelSize: 3,
+        strides: 1,
+        padding: 'same',
+        name: `${name}decConv`,
       }).apply(common) as tf.SymbolicTensor;
-      // let reward = tf.layers.separableConv2d({
-      //   filters: 2,
-      //   kernelSize: 3,
-      //   strides: 1,
-      //   padding: 'same',
-      //   name: `${name}decConv`,
-      // }).apply(common) as tf.SymbolicTensor;
-      // reward = tf.layers.batchNormalization({
-      //   name: `${name}decBn`,
-      // }).apply(reward) as tf.SymbolicTensor;
-      // reward = tf.layers.activation({
-      //   activation: 'relu'
-      // }).apply(reward) as tf.SymbolicTensor;
+      reward = tf.layers.batchNormalization({
+        name: `${name}decBn`,
+      }).apply(reward) as tf.SymbolicTensor;
+      reward = tf.layers.activation({
+        activation: 'relu'
+      }).apply(reward) as tf.SymbolicTensor;
   
-      // reward = tf.layers.flatten(
-      // ).apply(reward) as tf.SymbolicTensor;
+      reward = tf.layers.flatten(
+      ).apply(reward) as tf.SymbolicTensor;
     
       // reward = tf.layers.dropout({
       //   rate: 0.5
