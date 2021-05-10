@@ -10,6 +10,11 @@ export interface Pair {
   output: Output;
 };
 
+export interface TrainExamples {
+  inputs: Input[];
+  outputs: Output[];
+}
+
 export default interface Rules{
   step (gameState: GameState, action: number): GameStepResult;
   availables(gameState: GameState): number[];

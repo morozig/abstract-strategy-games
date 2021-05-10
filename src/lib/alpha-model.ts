@@ -5,6 +5,11 @@ import GameRules, {
   Pair
 } from '../interfaces/game-rules';
 import AlphaNetwork, { TfGraph, TypedInput } from './alpha-network';
+import {
+  loadTrainExamples,
+  getTrainDir,
+  saveTrainExamples
+} from '../lib/api';
 
 interface AlphaModelOptions {
   gameName: string;
@@ -31,47 +36,59 @@ export default class AlphaModel {
   async train(
     gameHistories: GameHistory[]
   ) {
-    const inputs = [] as Input[];
-    const outputs = [] as Output[];
+    let inputs = [] as Input[];
+    let outputs = [] as Output[];
     const statePairs = new Map<string, Pair[]>();
 
-    console.log('preparing training examples...');
-    for (let gameHistory of gameHistories) {
-      const pairs = this.rules.getPairs(gameHistory);
-      for (let pair of pairs) {
-        const { input } = pair;
-        const hash = input.flat(2).join('');
-        if (!statePairs.has(hash)) {
-          statePairs.set(hash, [pair]);
-        } else {
-          const currentPairs = statePairs.get(hash);
-          if (currentPairs) {
-            statePairs.set(hash, currentPairs.concat(pair));
+    const trainDir = await getTrainDir(this.gameName);
+    if (trainDir.includes('examples')){
+      const trainExamples = await loadTrainExamples(this.gameName);
+      inputs = trainExamples.inputs;
+      outputs = trainExamples.outputs;
+    } else {
+      console.log('preparing training examples...');
+      for (let gameHistory of gameHistories) {
+        const pairs = this.rules.getPairs(gameHistory);
+        for (let pair of pairs) {
+          const { input } = pair;
+          const hash = input.flat(2).join('');
+          if (!statePairs.has(hash)) {
+            statePairs.set(hash, [pair]);
+          } else {
+            const currentPairs = statePairs.get(hash);
+            if (currentPairs) {
+              statePairs.set(hash, currentPairs.concat(pair));
+            }
           }
         }
       }
-    }
-    const pairs = Array.from(statePairs.values())
-      .map(currentPairs => {
-        const count = currentPairs.length;
-        const pair = currentPairs[0];
-        if (count <= 1) {
-          return pair;
-        } else {
-          const totalReward = currentPairs.reduce(
-            (total, current) => total + current.output[1],
-            0
-          );
-          pair.output[1] = totalReward / count;
-          return pair;
-        }
+      const pairs = Array.from(statePairs.values())
+        .map(currentPairs => {
+          const count = currentPairs.length;
+          const pair = currentPairs[0];
+          if (count <= 1) {
+            return pair;
+          } else {
+            const totalReward = currentPairs.reduce(
+              (total, current) => total + current.output[1],
+              0
+            );
+            pair.output[1] = totalReward / count;
+            return pair;
+          }
+        });
+      pairs.sort(() => Math.random() - 0.5);
+  
+      for (let { input, output } of pairs) {
+        inputs.push(input);
+        outputs.push(output);
+      }
+      await saveTrainExamples(this.gameName, {
+        inputs,
+        outputs
       });
-    pairs.sort(() => Math.random() - 0.5);
-
-    for (let { input, output } of pairs) {
-      inputs.push(input);
-      outputs.push(output);
     }
+
     console.log(`training data length: ${inputs.length}`);
     const loss = await this.network.fit(inputs, outputs);
     return loss;
