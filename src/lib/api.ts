@@ -155,6 +155,19 @@ const saveTrainModel = async(
   await model.save(requestUrl);
 };
 
+const deleteTrain = async(
+  gameName: string
+) => {
+  const requestUrl = `/api/${gameName}/train`;
+
+  await fetch(
+    requestUrl,
+    {
+      method: 'DELETE'
+    }
+  );
+};
+
 export {
   getHistories,
   getModels,
@@ -168,5 +181,6 @@ export {
   loadTrainLosses,
   saveTrainLosses,
   loadTrainModel,
-  saveTrainModel
+  saveTrainModel,
+  deleteTrain
 }

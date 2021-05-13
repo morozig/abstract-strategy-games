@@ -7,7 +7,8 @@ import {
   loadTrainLosses,
   loadTrainModel,
   saveTrainModel,
-  saveTrainLosses
+  saveTrainLosses,
+  deleteTrain
 } from '../lib/api';
 import { copyWeights } from './networks';
 
@@ -217,6 +218,7 @@ export default class AlphaNetwork {
       }
     }
 
+    await deleteTrain(this.gameName);
     const loss = trainLosses[trainLosses.length - 1]
       .reduce((total, current) => total + current, 0) / ensembleSize;
     console.log('loss:', loss.toPrecision(3));

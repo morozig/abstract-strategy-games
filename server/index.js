@@ -194,4 +194,23 @@ app.post('/api/:game/train/model', async (req, res) => {
   }
 });
 
+app.delete('/api/:game/train', (req, res) => {
+  const game = req.params.game;
+  const gameDir = path.resolve(dataDir, game);
+  const trainDir = path.resolve(gameDir, 'train');
+  try {
+    if (fs.existsSync(trainDir)) {
+      fs.rmdirSync(trainDir, {
+        recursive: true
+      });
+      res.send(`Deleted /${game}/train`);
+    } else {
+      res.send(`/${game}/train not found`);
+    }
+  }
+  catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 app.listen(3001);

@@ -262,6 +262,18 @@ const saveTrainModel = async(
   await model.save(requestUrl);
 };
 
+const deleteTrain = async(
+  gameName: string
+) => {
+  const gameDir = path.resolve(dataDir, gameName);
+  const trainDir = path.resolve(gameDir, 'train');
+  if (fs.existsSync(trainDir)) {
+    fs.rmdirSync(trainDir, {
+      recursive: true
+    });
+  }
+};
+
 export {
   getHistories,
   getModels,
@@ -275,5 +287,6 @@ export {
   loadTrainLosses,
   saveTrainLosses,
   loadTrainModel,
-  saveTrainModel
+  saveTrainModel,
+  deleteTrain
 }
