@@ -164,4 +164,34 @@ app.post('/api/:game/train', (req, res) => {
   });
 });
 
+app.post('/api/:game/train/model', async (req, res) => {
+  if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).send('No files were uploaded.');
+  }
+  const game = req.params.game;
+  const gameDir = path.resolve(dataDir, game);
+  if (!fs.existsSync(gameDir)) {
+    fs.mkdirSync(gameDir);
+  }
+  const trainDir = path.resolve(gameDir, 'train');
+  if (!fs.existsSync(trainDir)) {
+    fs.mkdirSync(trainDir);
+  }
+  const modelDir = path.resolve(trainDir, 'model');
+  if (!fs.existsSync(modelDir)) {
+    fs.mkdirSync(modelDir);
+  }
+  try {
+    for (let fileName in req.files) {
+      const file = req.files[fileName];
+      const filePath = path.resolve(modelDir, fileName);
+      await saveFile(file, filePath);
+    }
+    res.send(`Uploaded ${Object.keys(req.files).length} files`);
+  }
+  catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 app.listen(3001);

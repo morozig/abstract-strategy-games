@@ -2,7 +2,12 @@ import * as tf from '@tensorflow/tfjs';
 import { Input, Output } from '../interfaces/game-rules';
 import {
   saveModel,
-  loadModel
+  loadModel,
+  getTrainDir,
+  loadTrainLosses,
+  loadTrainModel,
+  saveTrainModel,
+  saveTrainLosses
 } from '../lib/api';
 import { copyWeights } from './networks';
 
@@ -63,6 +68,7 @@ export interface AlphaNetworkOptions {
   width: number;
   depth: number;
   graph: TfGraph;
+  gameName: string;
 };
 
 export default class AlphaNetwork {
@@ -71,11 +77,13 @@ export default class AlphaNetwork {
   private depth: number;
   private graph: TfGraph;
   private model: tf.LayersModel;
+  private gameName: string;
   constructor(options: AlphaNetworkOptions) {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
     this.graph = options.graph;
+    this.gameName = options.gameName;
     const input = tf.input({
       shape: [this.height, this.width, this.depth]
     });
@@ -114,15 +122,30 @@ export default class AlphaNetwork {
     const trainOutputs = outputs.slice(0, -valSplit);
     const valOutputs = outputs.slice(-valSplit);
 
-    const losses = [] as number[];
+    const trainDir = await getTrainDir(this.gameName);
+    let trainLosses = [] as number[][];
+    if (trainDir.includes('losses')) {
+      trainLosses = await loadTrainLosses(this.gameName);
+    }
+    let trainModel = this.model;
+    if (trainDir.includes('model')) {
+      trainModel = await loadTrainModel(this.gameName);
+    }
 
-    for (let i = 1; i <= ensembleSize; i++) {
-      const epochsLosses = [] as number[];
-      const epochTrainOrder = trainOrder.slice();
-      if (i % 2 === 0) epochTrainOrder.reverse();
-      for (let j = 1; j <= this.graph.epochs; j++) {
-        for (let task of epochTrainOrder) {
-          console.log(`training ${task}${i} epoch${j}...`);
+    for (let epoch = 0; epoch < this.graph.epochs; epoch++) {
+      if (!trainLosses[epoch]) {
+        trainLosses[epoch] = [];
+      }
+      for (let head = 0; head < ensembleSize; head++) {
+        let headLoss = trainLosses[epoch][head];
+        if (headLoss) {
+          continue;
+        }
+        const headLosses = [] as number[];
+        const headTrainOrder = trainOrder.slice();
+        if (head % 2 === 1) headTrainOrder.reverse();
+        for (let task of headTrainOrder) {
+          console.log(`training epoch${epoch + 1} ${task}${head + 1} ...`);
           const xsTensor = tf.tensor4d(trainInputs.map(randomAugment));
           const ysTensor = tf.tensor2d(trainOutputs.map(
             output => task === 'policy' ?
@@ -136,10 +159,10 @@ export default class AlphaNetwork {
           const input = tf.input({
             shape: [this.height, this.width, this.depth]
           });
-          const commonNetwork = this.graph.createCommon(i + 1)(input);
+          const commonNetwork = this.graph.createCommon(head + 1)(input);
           const headNetwork = task === 'policy' ?
-            this.graph.createPolicy(i + 1)(commonNetwork) :
-            this.graph.createReward(i + 1)(commonNetwork);
+            this.graph.createPolicy(head + 1)(commonNetwork) :
+            this.graph.createReward(head + 1)(commonNetwork);
           const taskModel = tf.model(
             {
               inputs: input,
@@ -150,7 +173,14 @@ export default class AlphaNetwork {
             this.graph.policyCompileArgsCreator() :
             this.graph.rewardCompileArgsCreator()
           );
-          copyWeights(this.model, taskModel);
+          if (
+            !trainLosses[epoch - 1] ||
+            !trainLosses[epoch - 1][head]
+          ) {
+            copyWeights(this.model, taskModel);
+          } else {
+            copyWeights(trainModel, taskModel);
+          }
           const epochs = task === 'policy' ? 2 : 1;
 
           const taskHistory = await taskModel.fit(
@@ -171,22 +201,24 @@ export default class AlphaNetwork {
           valXsTensor.dispose();
           valYsTensor.dispose();
           const taskLoss = taskHistory.history.val_loss[
-            0
+            epochs - 1
           ] as number;
-          epochsLosses.push(taskLoss);
+          headLosses.push(taskLoss);
           copyWeights(taskModel, this.model);
+          copyWeights(taskModel, trainModel);
         }
+        headLoss = headLosses.reduce(
+          (total, current) => total + current,
+          0
+        );
+        trainLosses[epoch][head] = +headLoss.toPrecision(3);
+        await saveTrainModel(trainModel, this.gameName);
+        await saveTrainLosses(this.gameName, trainLosses);
       }
-      losses.push(
-        epochsLosses
-        .slice(-2)
-        .reduce(
-          (total, current) => total + current, 0
-        ) / ensembleSize
-      )
     }
 
-    const loss = losses.reduce((total, current) => total + current, 0);
+    const loss = trainLosses[trainLosses.length - 1]
+      .reduce((total, current) => total + current, 0) / ensembleSize;
     console.log('loss:', loss.toPrecision(3));
     return loss;
   }

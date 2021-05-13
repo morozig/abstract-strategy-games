@@ -183,6 +183,84 @@ const saveTrainExamples = async(
   );
 };
 
+const loadTrainLosses = async(gameName: string) => {
+  const gameDir = path.resolve(dataDir, gameName);
+  const trainDir = path.resolve(gameDir, 'train');
+  const filePath = path.resolve(
+    trainDir,
+    'losses.json'
+  );
+
+  const rawData = await fs.readFileSync(
+    filePath, 'utf8'
+  );
+  const trainLosses = JSON.parse(
+    rawData
+  ) as number[][];
+  return trainLosses;
+};
+
+const saveTrainLosses = async(
+  gameName: string,
+  trainLosses: number[][]
+) => {
+  const gameDir = path.resolve(dataDir, gameName);
+  if (!fs.existsSync(gameDir)) {
+    fs.mkdirSync(gameDir);
+  }
+  const trainDir = path.resolve(gameDir, 'train');
+  if (!fs.existsSync(trainDir)) {
+    fs.mkdirSync(trainDir);
+  }
+
+  const filePath = path.resolve(
+    trainDir,
+    'losses.json'
+  );
+  fs.writeFileSync(
+    filePath,
+    JSON.stringify(trainLosses),
+    'utf8'
+  );
+};
+
+const loadTrainModel = async(gameName: string) => {
+  const gameDir = path.resolve(dataDir, gameName);
+  const trainDir = path.resolve(gameDir, 'train');
+  const modelDir = path.resolve(trainDir, 'model');
+  const modelPath = path.resolve(modelDir, 'model.json');
+  const requestUrl = url.pathToFileURL(modelPath).href.replace(
+    '///', 
+    process.platform === 'win32' ? '//' : '///'
+  ); // https://stackoverflow.com/questions/57859770
+
+  const model = await tf.loadLayersModel(requestUrl);
+  return model;
+};
+
+const saveTrainModel = async(
+  model: tf.LayersModel,
+  gameName: string,
+) => {
+  const gameDir = path.resolve(dataDir, gameName);
+  if (!fs.existsSync(gameDir)) {
+    fs.mkdirSync(gameDir);
+  }
+  const trainDir = path.resolve(gameDir, 'train');
+  if (!fs.existsSync(trainDir)) {
+    fs.mkdirSync(trainDir);
+  }
+  const modelDir = path.resolve(trainDir, 'model');
+  if (!fs.existsSync(modelDir)) {
+    fs.mkdirSync(modelDir);
+  }
+
+  const requestUrl = url.pathToFileURL(modelDir).href.replace(
+    '///', 
+    process.platform === 'win32' ? '//' : '///'
+  ); // https://stackoverflow.com/questions/57859770
+  await model.save(requestUrl);
+};
 
 export {
   getHistories,
@@ -193,5 +271,9 @@ export {
   loadModel,
   getTrainDir,
   loadTrainExamples,
-  saveTrainExamples
+  saveTrainExamples,
+  loadTrainLosses,
+  saveTrainLosses,
+  loadTrainModel,
+  saveTrainModel
 }

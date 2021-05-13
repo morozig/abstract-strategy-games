@@ -106,6 +106,55 @@ const saveTrainExamples = async(
   );
 };
 
+const loadTrainLosses = async(gameName: string) => {
+  const requestUrl = `/data/${gameName}/train/losses.json`;
+  const lossesRequest = await fetch(requestUrl);
+  const losses = await lossesRequest.json() as number[][];
+  return losses;
+};
+
+const saveTrainLosses = async(
+    gameName: string,
+    trainLosses: number[][]
+  ) => {
+  const requestUrl = `/api/${gameName}/train`;
+  const saveData = new FormData();
+  saveData.append(
+    'losses.json',
+    new Blob(
+      [JSON.stringify(trainLosses)],
+      {type: 'application/json'}
+    ),
+    'losses.json'
+  );
+
+  await fetch(
+    requestUrl,
+    {
+      method: 'POST',
+      body: saveData
+    }
+  );
+};
+
+const loadTrainModel = async(gameName: string) => {
+  const requestUrl = `${
+    config.dataUrl
+  }/${gameName}/train/model/model.json`;
+  const model = await tf.loadLayersModel(requestUrl);
+  return model;
+};
+
+const saveTrainModel = async(
+  model: tf.LayersModel,
+  gameName: string
+) => {
+  const requestUrl = `${
+    window.location
+  }api/${gameName}/train/model`;
+  await model.save(requestUrl);
+};
+
 export {
   getHistories,
   getModels,
@@ -115,5 +164,9 @@ export {
   loadModel,
   getTrainDir,
   loadTrainExamples,
-  saveTrainExamples
+  saveTrainExamples,
+  loadTrainLosses,
+  saveTrainLosses,
+  loadTrainModel,
+  saveTrainModel
 }

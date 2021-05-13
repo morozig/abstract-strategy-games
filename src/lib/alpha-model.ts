@@ -30,7 +30,8 @@ export default class AlphaModel {
       height: this.rules.height,
       width: this.rules.width,
       depth: this.rules.depth,
-      graph: this.graph
+      graph: this.graph,
+      gameName: this.gameName
     });
   }
   async train(
