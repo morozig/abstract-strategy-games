@@ -123,25 +123,30 @@ app.post('/api/:game/model/:model', async (req, res) => {
   }
 });
 
-app.get('/api/:game/train', (req, res) => {
+app.get('/api/:game/train/:model', (req, res) => {
   const game = req.params.game;
   const gameDir = path.resolve(dataDir, game);
   if (!fs.existsSync(gameDir)) {
     return res.json([]);
   }
-  const files = [];
   const trainDir = path.resolve(gameDir, 'train');
   if (!fs.existsSync(trainDir)) {
     return res.json([]);
   }
-  for (let file of fs.readdirSync(trainDir)) {
+  const model = req.params.model;
+  const modelDir = path.resolve(trainDir, model);
+  if (!fs.existsSync(modelDir)) {
+    return res.json([]);
+  }
+  const files = [];
+  for (let file of fs.readdirSync(modelDir)) {
     files.push(path.basename(file, '.json'));
   }
   return res.json(files);
 });
 
 
-app.post('/api/:game/train', (req, res) => {
+app.post('/api/:game/train/:model', (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
   }
@@ -154,17 +159,22 @@ app.post('/api/:game/train', (req, res) => {
   if (!fs.existsSync(trainDir)) {
     fs.mkdirSync(trainDir);
   }
+  const model = req.params.model;
+  const modelDir = path.resolve(trainDir, model);
+  if (!fs.existsSync(modelDir)) {
+    fs.mkdirSync(modelDir);
+  }
 
   const fileName = Object.keys(req.files)[0];
   const file = req.files[fileName];
-  const filePath = path.resolve(trainDir, fileName);
+  const filePath = path.resolve(modelDir, fileName);
   file.mv(filePath, (err) => {
     if (err) return res.status(500).send(err);
     res.send('File uploaded!');
   });
 });
 
-app.post('/api/:game/train/model', async (req, res) => {
+app.post('/api/:game/train/:model/model', async (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
   }
@@ -177,14 +187,19 @@ app.post('/api/:game/train/model', async (req, res) => {
   if (!fs.existsSync(trainDir)) {
     fs.mkdirSync(trainDir);
   }
-  const modelDir = path.resolve(trainDir, 'model');
+  const model = req.params.model;
+  const modelDir = path.resolve(trainDir, model);
   if (!fs.existsSync(modelDir)) {
     fs.mkdirSync(modelDir);
+  }
+  const modelModelDir = path.resolve(modelDir, 'model');
+  if (!fs.existsSync(modelModelDir)) {
+    fs.mkdirSync(modelModelDir);
   }
   try {
     for (let fileName in req.files) {
       const file = req.files[fileName];
-      const filePath = path.resolve(modelDir, fileName);
+      const filePath = path.resolve(modelModelDir, fileName);
       await saveFile(file, filePath);
     }
     res.send(`Uploaded ${Object.keys(req.files).length} files`);

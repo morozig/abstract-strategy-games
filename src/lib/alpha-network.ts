@@ -7,8 +7,7 @@ import {
   loadTrainLosses,
   loadTrainModel,
   saveTrainModel,
-  saveTrainLosses,
-  deleteTrain
+  saveTrainLosses
 } from '../lib/api';
 import { copyWeights } from './networks';
 
@@ -34,6 +33,13 @@ export interface TfGraph {
   readonly rewardCompileArgsCreator: CompileArgsCreator;
   readonly batchSize: number;
   readonly epochs: number;
+};
+
+export interface FitOptions {
+  inputs: Input[];
+  outputs: Output[];
+  gameName: string;
+  modelName: string;
 };
 
 const randomAugment = (input: Input) => {
@@ -69,7 +75,6 @@ export interface AlphaNetworkOptions {
   width: number;
   depth: number;
   graph: TfGraph;
-  gameName: string;
 };
 
 export default class AlphaNetwork {
@@ -78,13 +83,11 @@ export default class AlphaNetwork {
   private depth: number;
   private graph: TfGraph;
   private model: tf.LayersModel;
-  private gameName: string;
   constructor(options: AlphaNetworkOptions) {
     this.height = options.height;
     this.width = options.width;
     this.depth = options.depth;
     this.graph = options.graph;
-    this.gameName = options.gameName;
     const input = tf.input({
       shape: [this.height, this.width, this.depth]
     });
@@ -113,24 +116,27 @@ export default class AlphaNetwork {
       }
     );
   }
-  async fit(
-    inputs: Input[],
-    outputs: Output[]
-  ){
+  async fit(options: FitOptions){
+    const {
+      inputs,
+      outputs,
+      gameName,
+      modelName
+    } = options;
     const valSplit = Math.floor(inputs.length * validationSplit);
     const trainInputs = inputs.slice(0, -valSplit);
     const valInputs = inputs.slice(-valSplit);
     const trainOutputs = outputs.slice(0, -valSplit);
     const valOutputs = outputs.slice(-valSplit);
 
-    const trainDir = await getTrainDir(this.gameName);
+    const trainDir = await getTrainDir(gameName, modelName);
     let trainLosses = [] as number[][];
     if (trainDir.includes('losses')) {
-      trainLosses = await loadTrainLosses(this.gameName);
+      trainLosses = await loadTrainLosses(gameName, modelName);
     }
     let trainModel = this.model;
     if (trainDir.includes('model')) {
-      trainModel = await loadTrainModel(this.gameName);
+      trainModel = await loadTrainModel(gameName, modelName);
     }
 
     for (let epoch = 0; epoch < this.graph.epochs; epoch++) {
@@ -212,13 +218,12 @@ export default class AlphaNetwork {
           (total, current) => total + current,
           0
         );
-        trainLosses[epoch][head] = +headLoss.toPrecision(3);
-        await saveTrainModel(trainModel, this.gameName);
-        await saveTrainLosses(this.gameName, trainLosses);
+        trainLosses[epoch][head] = headLoss;
+        await saveTrainModel(trainModel, gameName, modelName);
+        await saveTrainLosses(gameName, modelName, trainLosses);
       }
     }
 
-    await deleteTrain(this.gameName);
     const loss = trainLosses[trainLosses.length - 1]
       .reduce((total, current) => total + current, 0) / ensembleSize;
     console.log('loss:', loss.toPrecision(3));

@@ -16,7 +16,8 @@ import GameClass from './games/xos';
 import { GamePlayerType } from './interfaces/game-player';
 // import { GamePlayerType } from './interfaces/game-player';
 
-const winRate = 0.55;
+// const winRate = 0.55;
+const winRate = 0.4;
 
 const trainGeneration = async (
   game: Game,
@@ -73,7 +74,7 @@ const trainGeneration = async (
 
   // console.log(modelHistories);
 
-  const loss = await model.train(modelHistories);
+  const loss = await model.train(modelHistories, modelName);
   if (loss > 1) {
     return false;
   }

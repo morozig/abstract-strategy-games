@@ -125,7 +125,10 @@ const saveModel = async(
   await model.save(requestUrl);
 };
 
-const getTrainDir = async (gameName: string) => {
+const getTrainDir = async (
+  gameName: string,
+  modelName: string
+) => {
   const files = [] as string[];
   const gameDir = path.resolve(dataDir, gameName);
   if (!fs.existsSync(gameDir)) {
@@ -135,18 +138,27 @@ const getTrainDir = async (gameName: string) => {
   if (!fs.existsSync(trainDir)) {
     return files;
   }
+  const modelDir = path.resolve(trainDir, modelName);
+  if (!fs.existsSync(modelDir)) {
+    return files
+  }
 
-  for (let file of fs.readdirSync(trainDir)) {
+  for (let file of fs.readdirSync(modelDir)) {
     files.push(path.basename(file, '.json'));
   }
   return files;
 };
 
-const loadTrainExamples = async(gameName: string) => {
+const loadTrainExamples = async(
+  gameName: string,
+  modelName: string
+) => {
   const gameDir = path.resolve(dataDir, gameName);
   const trainDir = path.resolve(gameDir, 'train');
+  const modelDir = path.resolve(trainDir, modelName);
+
   const filePath = path.resolve(
-    trainDir,
+    modelDir,
     'examples.json'
   );
 
@@ -161,6 +173,7 @@ const loadTrainExamples = async(gameName: string) => {
 
 const saveTrainExamples = async(
   gameName: string,
+  modelName: string,
   trainExamples: TrainExamples
 ) => {
   const gameDir = path.resolve(dataDir, gameName);
@@ -171,9 +184,13 @@ const saveTrainExamples = async(
   if (!fs.existsSync(trainDir)) {
     fs.mkdirSync(trainDir);
   }
+  const modelDir = path.resolve(trainDir, modelName);
+  if (!fs.existsSync(modelDir)) {
+    fs.mkdirSync(modelDir);
+  }
 
   const filePath = path.resolve(
-    trainDir,
+    modelDir,
     'examples.json'
   );
   fs.writeFileSync(
@@ -183,11 +200,15 @@ const saveTrainExamples = async(
   );
 };
 
-const loadTrainLosses = async(gameName: string) => {
+const loadTrainLosses = async(
+  gameName: string,
+  modelName: string
+) => {
   const gameDir = path.resolve(dataDir, gameName);
   const trainDir = path.resolve(gameDir, 'train');
+  const modelDir = path.resolve(trainDir, modelName);
   const filePath = path.resolve(
-    trainDir,
+    modelDir,
     'losses.json'
   );
 
@@ -202,6 +223,7 @@ const loadTrainLosses = async(gameName: string) => {
 
 const saveTrainLosses = async(
   gameName: string,
+  modelName: string,
   trainLosses: number[][]
 ) => {
   const gameDir = path.resolve(dataDir, gameName);
@@ -212,9 +234,13 @@ const saveTrainLosses = async(
   if (!fs.existsSync(trainDir)) {
     fs.mkdirSync(trainDir);
   }
+  const modelDir = path.resolve(trainDir, modelName);
+  if (!fs.existsSync(modelDir)) {
+    fs.mkdirSync(modelDir);
+  }
 
   const filePath = path.resolve(
-    trainDir,
+    modelDir,
     'losses.json'
   );
   fs.writeFileSync(
@@ -224,11 +250,15 @@ const saveTrainLosses = async(
   );
 };
 
-const loadTrainModel = async(gameName: string) => {
+const loadTrainModel = async(
+  gameName: string,
+  modelName: string
+) => {
   const gameDir = path.resolve(dataDir, gameName);
   const trainDir = path.resolve(gameDir, 'train');
-  const modelDir = path.resolve(trainDir, 'model');
-  const modelPath = path.resolve(modelDir, 'model.json');
+  const modelDir = path.resolve(trainDir, modelName);
+  const modelModelDir = path.resolve(modelDir, 'model');
+  const modelPath = path.resolve(modelModelDir, 'model.json');
   const requestUrl = url.pathToFileURL(modelPath).href.replace(
     '///', 
     process.platform === 'win32' ? '//' : '///'
@@ -241,6 +271,7 @@ const loadTrainModel = async(gameName: string) => {
 const saveTrainModel = async(
   model: tf.LayersModel,
   gameName: string,
+  modelName: string
 ) => {
   const gameDir = path.resolve(dataDir, gameName);
   if (!fs.existsSync(gameDir)) {
@@ -250,12 +281,16 @@ const saveTrainModel = async(
   if (!fs.existsSync(trainDir)) {
     fs.mkdirSync(trainDir);
   }
-  const modelDir = path.resolve(trainDir, 'model');
+  const modelDir = path.resolve(trainDir, modelName);
   if (!fs.existsSync(modelDir)) {
     fs.mkdirSync(modelDir);
   }
+  const modelModelDir = path.resolve(modelDir, 'model');
+  if (!fs.existsSync(modelModelDir)) {
+    fs.mkdirSync(modelModelDir);
+  }
 
-  const requestUrl = url.pathToFileURL(modelDir).href.replace(
+  const requestUrl = url.pathToFileURL(modelModelDir).href.replace(
     '///', 
     process.platform === 'win32' ? '//' : '///'
   ); // https://stackoverflow.com/questions/57859770

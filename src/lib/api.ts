@@ -68,15 +68,21 @@ const saveModel = async(
   await model.save(requestUrl);
 };
 
-const getTrainDir = async (gameName: string) => {
-  const requestUrl = `/api/${gameName}/train`;
+const getTrainDir = async (
+  gameName: string,
+  modelName: string
+) => {
+  const requestUrl = `/api/${gameName}/train/${modelName}`;
   const trainDirRequest = await fetch(requestUrl);
   const trainDir = await trainDirRequest.json() as string[];
   return trainDir;
 };
 
-const loadTrainExamples = async(gameName: string) => {
-  const requestUrl = `/data/${gameName}/train/examples.json`;
+const loadTrainExamples = async(
+  gameName: string,
+  modelName: string
+) => {
+  const requestUrl = `/data/${gameName}/train/${modelName}/examples.json`;
   const trainExamplesRequest = await fetch(requestUrl);
   const trainExamples = await trainExamplesRequest.json() as TrainExamples;
   return trainExamples;
@@ -84,9 +90,10 @@ const loadTrainExamples = async(gameName: string) => {
 
 const saveTrainExamples = async(
     gameName: string,
+    modelName: string,
     trainExamples: TrainExamples
   ) => {
-  const requestUrl = `/api/${gameName}/train`;
+  const requestUrl = `/api/${gameName}/train/${modelName}`;
   const saveData = new FormData();
   saveData.append(
     'examples.json',
@@ -106,8 +113,11 @@ const saveTrainExamples = async(
   );
 };
 
-const loadTrainLosses = async(gameName: string) => {
-  const requestUrl = `/data/${gameName}/train/losses.json`;
+const loadTrainLosses = async(
+  gameName: string,
+  modelName: string
+) => {
+  const requestUrl = `/data/${gameName}/train/${modelName}/losses.json`;
   const lossesRequest = await fetch(requestUrl);
   const losses = await lossesRequest.json() as number[][];
   return losses;
@@ -115,9 +125,10 @@ const loadTrainLosses = async(gameName: string) => {
 
 const saveTrainLosses = async(
     gameName: string,
+    modelName: string,
     trainLosses: number[][]
   ) => {
-  const requestUrl = `/api/${gameName}/train`;
+  const requestUrl = `/api/${gameName}/train/${modelName}`;
   const saveData = new FormData();
   saveData.append(
     'losses.json',
@@ -137,21 +148,25 @@ const saveTrainLosses = async(
   );
 };
 
-const loadTrainModel = async(gameName: string) => {
+const loadTrainModel = async(
+  gameName: string,
+  modelName: string
+) => {
   const requestUrl = `${
     config.dataUrl
-  }/${gameName}/train/model/model.json`;
+  }/${gameName}/train/${modelName}/model/model.json`;
   const model = await tf.loadLayersModel(requestUrl);
   return model;
 };
 
 const saveTrainModel = async(
   model: tf.LayersModel,
-  gameName: string
+  gameName: string,
+  modelName: string
 ) => {
   const requestUrl = `${
     window.location
-  }api/${gameName}/train/model`;
+  }api/${gameName}/train/${modelName}/model`;
   await model.save(requestUrl);
 };
 

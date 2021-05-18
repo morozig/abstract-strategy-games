@@ -30,20 +30,20 @@ export default class AlphaModel {
       height: this.rules.height,
       width: this.rules.width,
       depth: this.rules.depth,
-      graph: this.graph,
-      gameName: this.gameName
+      graph: this.graph
     });
   }
   async train(
-    gameHistories: GameHistory[]
+    gameHistories: GameHistory[],
+    modelName: string
   ) {
     let inputs = [] as Input[];
     let outputs = [] as Output[];
     const statePairs = new Map<string, Pair[]>();
 
-    const trainDir = await getTrainDir(this.gameName);
+    const trainDir = await getTrainDir(this.gameName, modelName);
     if (trainDir.includes('examples')){
-      const trainExamples = await loadTrainExamples(this.gameName);
+      const trainExamples = await loadTrainExamples(this.gameName, modelName);
       inputs = trainExamples.inputs;
       outputs = trainExamples.outputs;
     } else {
@@ -84,14 +84,23 @@ export default class AlphaModel {
         inputs.push(input);
         outputs.push(output);
       }
-      await saveTrainExamples(this.gameName, {
-        inputs,
-        outputs
-      });
+      await saveTrainExamples(
+        this.gameName,
+        modelName,
+        {
+          inputs,
+          outputs
+        }
+      );
     }
 
     console.log(`training data length: ${inputs.length}`);
-    const loss = await this.network.fit(inputs, outputs);
+    const loss = await this.network.fit({
+      gameName: this.gameName,
+      modelName,
+      inputs,
+      outputs
+    });
     return loss;
   }
   async save(name: string){
