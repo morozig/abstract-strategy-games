@@ -139,11 +139,11 @@ export default class AlphaNetwork {
       trainModel = await loadTrainModel(gameName, modelName);
     }
 
-    for (let epoch = 0; epoch < this.graph.epochs; epoch++) {
-      if (!trainLosses[epoch]) {
-        trainLosses[epoch] = [];
-      }
-      for (let head = 0; head < ensembleSize; head++) {
+    for (let head = 0; head < ensembleSize; head++) {
+      for (let epoch = 0; epoch < this.graph.epochs; epoch++) {
+        if (!trainLosses[epoch]) {
+          trainLosses[epoch] = [];
+        }
         let headLoss = trainLosses[epoch][head];
         if (headLoss) {
           continue;

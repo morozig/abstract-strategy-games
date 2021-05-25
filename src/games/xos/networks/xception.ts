@@ -6,10 +6,11 @@ import {
 } from '../../../lib/networks';
 
 // const numFilters = 64;
-const numLayers = 5;
+const numLayers = 6;
+const numFrozen = 1;
 const batchSize = 1024;
 const epochs = 10;
-const learningRate = 0.001;
+const learningRate = 0.0005;
 // const dropout = 0.1;
 
 interface TfNetworkOptions {
@@ -35,7 +36,8 @@ export default class Xception implements TfGraph {
     return (input: tf.SymbolicTensor) => {
       let common = xception(input, {
         numLayers,
-        name: `${name}Xception`
+        name: `${name}Xception`,
+        numFrozen
       });
       return common;
     };

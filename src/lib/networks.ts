@@ -182,12 +182,14 @@ const xception = (
   input: tf.SymbolicTensor,
   options: {
     numLayers: number;
+    numFrozen?: number;
     name?: string;
   }
 ) => {
   const {
     name = '',
-    numLayers
+    numLayers,
+    numFrozen = 0
   } = options;
 
   let network = input;
@@ -197,6 +199,7 @@ const xception = (
     strides: 1,
     padding: 'same',
     name: `${name}encConv1`,
+    trainable: !numFrozen
   }).apply(network) as tf.SymbolicTensor;
   network = tf.layers.batchNormalization({
     name: `${name}encBn1`,
@@ -210,15 +213,19 @@ const xception = (
     strides: 1,
     padding: 'same',
     name: `${name}encConv2`,
+    trainable: !numFrozen
   }).apply(network) as tf.SymbolicTensor;
   network = tf.layers.batchNormalization({
     name: `${name}encBn2`,
   }).apply(network) as tf.SymbolicTensor;
 
   for (let i = 1; i <= numLayers; i++) {
-    const resId = i <= numLayers / 2 ?
+    const resId = i <= Math.ceil(numLayers / 2) ?
       `${i}` :
       `${i - numLayers - 1}`;
+    const frozen = i <= Math.ceil(numLayers / 2) ?
+      numFrozen >= i * 2 :
+      numFrozen >= 1 + 2 * (i - numLayers - 1);
     let res = network;
     for (let j = 1; j <= 3; j++) {
       res = tf.layers.activation({
@@ -230,6 +237,7 @@ const xception = (
         strides: 1,
         padding: 'same',
         name: `${name}res${resId}Conv${j}`,
+        trainable: !frozen
       }).apply(res) as tf.SymbolicTensor;
       res = tf.layers.batchNormalization({
         name: `${name}res${resId}Bn${j}`,

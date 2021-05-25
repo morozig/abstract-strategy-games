@@ -27,7 +27,7 @@ export default class Xos implements Game {
     {
       type: GamePlayerType.Alpha,
       planCount: config.planCount,
-      modelName: 'alpha-5'
+      modelName: 'alpha-3'
     },
   ] as GamePlayer[];
   readonly randomTurnsCount = 6;
