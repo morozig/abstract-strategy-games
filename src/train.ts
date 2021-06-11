@@ -24,7 +24,7 @@ const trainGeneration = async (
     console.log(`${modelName} trained!`);
     return;
   }
-  // const rules = game.rules;
+  // const rules = game.rules; test
   const planCount = game.players.find(
     player => player.type === GamePlayerType.Alpha
   )?.planCount || game.rules.actionsCount;
