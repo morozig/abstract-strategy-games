@@ -3,18 +3,13 @@ import {
   playSelfAlpha
 } from './lib/play';
 import Game from '../src/interfaces/game';
-import GameHistory from './interfaces/game-history';
 import {
-  getModels,
-  getHistories,
-  loadHistory,
-  saveHistory
+  getModels
 } from './lib/api';
 
 // import GameClass from './games/four-row';
 import GameClass from './games/xos';
 import { GamePlayerType } from './interfaces/game-player';
-// import { GamePlayerType } from './interfaces/game-player';
 
 // const winRate = 0.55;
 const winRate = 0.4;
@@ -45,32 +40,15 @@ const trainGeneration = async (
     await model.load(previousModelName);
   }
 
-  let modelHistories = [] as GameHistory[];
-  const histories = await getHistories(game.name);
-  if (histories.includes(modelName)) {
-    const savedhistories = await loadHistory(
-      game.name,
-      modelName
-    );
-    for (let gameHistory of savedhistories) {
-      modelHistories.push(gameHistory);
-    }
-  } else {
-    const gameHistories = await playSelfAlpha({
-      createWorker: () => game.createWorker(),
-      model,
-      gamesCount: 5000,
-      averageTurns: 20,
-      planCount,
-      randomTurnsCount
-    });
-
-    for (let gameHistory of gameHistories) {
-      modelHistories.push(gameHistory);
-    }
-    // console.log(modelHistories);
-    await saveHistory(game.name, modelName, modelHistories);
-  }
+  const modelHistories = await playSelfAlpha({
+    model,
+    modelName,
+    createWorker: () => game.createWorker(),
+    gamesCount: 5000,
+    averageTurns: 20,
+    planCount,
+    randomTurnsCount
+  });
 
   // console.log(modelHistories);
 

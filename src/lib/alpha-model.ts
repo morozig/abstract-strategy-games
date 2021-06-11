@@ -18,7 +18,7 @@ interface AlphaModelOptions {
 };
 
 export default class AlphaModel {
-  private gameName: string;
+  readonly gameName: string;
   private rules: GameRules;
   private graph: TfGraph;
   private network: AlphaNetwork;
@@ -104,10 +104,10 @@ export default class AlphaModel {
     return loss;
   }
   async save(name: string){
-      await this.network.save(this.gameName, name);
+    await this.network.save(this.gameName, name);
   }
   async load(name: string){
-      await this.network.load(this.gameName, name);
+    await this.network.load(this.gameName, name);
   }
   async predict(history: number[]) {
     const input = this.rules.getInput(history);

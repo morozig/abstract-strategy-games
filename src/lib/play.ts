@@ -14,6 +14,11 @@ import { PlayWorkerType } from './play-worker';
 import Batcher from './batcher';
 import { TypedInput } from './alpha-network';
 import ProgressBar from './progress-bar';
+import {
+  getHistories,
+  loadHistory,
+  saveHistory
+} from '../lib/api';
 
 const getStates = (history: number[], rules: GameRules) => {
   const initial = rules.init();
@@ -66,6 +71,7 @@ const play = async (
 
 interface PlaySelfAlphaOptions {
   model: AlphaModel;
+  modelName: string;
   createWorker: () => Worker;
   gamesCount: number;
   averageTurns: number;
@@ -76,12 +82,29 @@ interface PlaySelfAlphaOptions {
 const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   const {
     model,
+    modelName,
     createWorker,
-    gamesCount,
     averageTurns,
     planCount,
     randomTurnsCount
   } = options;
+
+  const gameHistories = [] as GameHistory[];
+  const histories = await getHistories(model.gameName);
+  if (histories.includes(modelName)) {
+    const savedhistories = await loadHistory(
+      model.gameName,
+      modelName
+    );
+    for (let gameHistory of savedhistories) {
+      gameHistories.push(gameHistory);
+    }
+  }
+
+  const gamesCount = options.gamesCount - gameHistories.length;
+  if (!gamesCount) {
+    return gameHistories;
+  }
 
   // const size = 3;
   const size = await cpusCount();
@@ -166,7 +189,6 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
     size
   });
 
-  const gameHistories = [] as GameHistory[];
   for (let i = 0; i < gamesCount; i++) {
     pool.queue(async worker => {
       const gameHistory = await worker.play({
@@ -185,6 +207,13 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
         })
       ); 
       gameHistories.push(gameHistory);
+      if (gameHistories.length % 100 === 0) {
+        await saveHistory(
+          model.gameName,
+          modelName,
+          gameHistories
+        )
+      }
     });
   }
   
@@ -205,6 +234,11 @@ const playSelfAlpha = async (options: PlaySelfAlphaOptions) => {
   // );
   progressBar.update(gamesCount * averageTurns * planCount * 0.9);
   progressBar.stop();
+  await saveHistory(
+    model.gameName,
+    modelName,
+    gameHistories
+  )
   return gameHistories;
 };
 
