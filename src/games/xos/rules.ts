@@ -9,7 +9,7 @@ import {
   State
 } from './board';
 import { getWinner2D } from '../../lib/xos';
-import { getStates } from '../../lib/play';
+import { getStates } from '../../lib/game-helpers';
 import PolicyAction from '../../interfaces/policy-action';
 import { PlaneSymmetry, plane } from '../../lib/transforms';
 import GameHistory from '../../interfaces/game-history';
