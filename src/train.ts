@@ -52,10 +52,7 @@ const trainGeneration = async (
 
   // console.log(modelHistories);
 
-  const loss = await model.train(modelHistories, modelName);
-  if (loss > 1) {
-    return false;
-  }
+  await model.train(modelHistories, modelName);
 
   const gamesCount = 50;
   const contest = await playContestAlpha({

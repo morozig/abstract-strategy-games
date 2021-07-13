@@ -5,12 +5,11 @@ import {
 import GameRules from '../interfaces/game-rules';
 import GameHistory from '../interfaces/game-history';
 import { Transfer, TransferDescriptor } from 'threads';
-import { play } from '../lib/play';
 import Mcts from '../agents/mcts';
 import GamePrediction from '../interfaces/game-prediction';
 import Batcher from './batcher';
 import { sleep } from './helpers';
-
+import { play } from './game-helpers';
 interface InputsRequest {
   inputs: ArrayBuffer[] | TransferDescriptor<ArrayBuffer[]>;
   modelIndex?: number;

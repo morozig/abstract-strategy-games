@@ -10,6 +10,7 @@ import {
   getTrainDir,
   saveTrainExamples
 } from '../lib/api';
+import { retry } from './helpers';
 
 interface AlphaModelOptions {
   gameName: string;
@@ -111,7 +112,7 @@ export default class AlphaModel {
   }
   async predict(history: number[]) {
     const input = this.rules.getInput(history);
-    const [output] = await this.network.predict([input]);
+    const [output] = await retry(() => this.network.predict([input]));
 
     const [ policy, reward ] = output;
     return {

@@ -86,6 +86,32 @@ const oneHot = (action: number, actionsCount: number) => {
   policy[action - 1] = 1;
   return policy;
 };
+interface RetryOptions<T> {
+  
+};
+
+const retry = async <T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  sleepMs = 30 * 1000,
+) => {
+  let lastErr: any;
+
+  for (let i = 0; i < retries; i++) {
+    if (lastErr) {
+      await sleep(sleepMs);
+    }
+    try {
+      const result = await fn();
+      return result;
+    }
+    catch (err) {
+      console.log(`Error:, ${err}`, 'going to retry...');
+      lastErr = err;
+    }
+  }
+  throw(lastErr);
+};
 
 export {
   indexMax,
@@ -96,5 +122,6 @@ export {
   durationHR,
   cpusCount,
   oneHot,
-  chooseIndex
+  chooseIndex,
+  retry
 };
